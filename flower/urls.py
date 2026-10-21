@@ -44,6 +44,7 @@ handlers = [
     (r"/api/task/types", tasks.ListTaskTypes),
     (r"/api/queues/length", tasks.GetQueueLengths),
     (r"/api/task/info/(.*)", tasks.TaskInfo),
+    (r"/api/task/tree/(.+)", tasks.TaskTree),
     (r"/api/task/apply/(.+)", tasks.TaskApply),
     (r"/api/task/async-apply/(.+)", tasks.TaskAsyncApply),
     (r"/api/task/send-task/(.+)", tasks.TaskSend),

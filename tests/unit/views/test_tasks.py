@@ -407,3 +407,101 @@ class TaskColumnsTest(AsyncHTTPTestCase):
     def test_default_header(self):
         self.assertEqual(['name', 'uuid', 'state', 'received', 'runtime', 'worker'],
                          self.header_columns())
+
+
+class TasksTreeTest(AsyncHTTPTestCase):
+    def setUp(self):
+        super().setUp()
+        state = EventsState()
+        events = []
+        for task_id, parent in (('parent', None), ('child1', 'parent'),
+                                ('child2', 'parent'), ('grandchild', 'child2'),
+                                ('other', None)):
+            for event in task_succeeded_events(worker='worker1', id=task_id, name=task_id):
+                event['parent_id'] = parent
+                events.append(event)
+        for clock, event in enumerate(events):
+            event['clock'] = clock
+            event['local_received'] = time.time()
+            state.event(event)
+        self._app.events.state = state
+
+    def datatable(self, search='', expanded=None, tree='1', start=0, length=10):
+        params = {
+            'draw': 1, 'start': start, 'length': length, 'search[value]': search,
+            'order[0][column]': 0, 'columns[0][data]': 'name', 'order[0][dir]': 'asc',
+            'tree': tree, 'tree_expanded': json.dumps(expanded or {}),
+        }
+        r = self.post('/tasks/datatable', body=params)
+        self.assertEqual(200, r.code)
+        return json.loads(r.body.decode('utf-8'))
+
+    def test_top_level_tasks_are_the_records(self):
+        table = self.datatable()
+        self.assertEqual(['other', 'parent'], [row['uuid'] for row in table['data']])
+        self.assertEqual(2, table['recordsTotal'])
+        self.assertEqual(2, table['recordsFiltered'])
+        parent = table['data'][1]
+        self.assertEqual(2, parent['tree']['children'])
+        self.assertFalse(parent['tree']['expanded'])
+        self.assertEqual({'SUCCESS': 3}, parent['tree']['summary'])
+        self.assertEqual('worker1', parent['worker'])
+        self.assertNotIn('children', parent)
+
+    def test_expanded_tasks_list_their_children(self):
+        table = self.datatable(expanded={'parent': 50, 'child2': 50})
+        self.assertEqual(
+            [('other', 0), ('parent', 0), ('child1', 1), ('child2', 1), ('grandchild', 2)],
+            [(row['uuid'], row['tree']['depth']) for row in table['data']])
+        self.assertEqual(2, table['recordsFiltered'])
+
+    def test_children_limit_adds_a_more_row(self):
+        table = self.datatable(expanded={'parent': 1})
+        rows = table['data']
+        self.assertEqual(['other', 'parent', 'child1', 'parent:more'],
+                         [row['uuid'] for row in rows])
+        self.assertEqual({'depth': 1, 'guides': [], 'last': True, 'parent_id': 'parent',
+                          'more': 1, 'limit': 1}, rows[-1]['tree'])
+
+    def test_search_lists_matches_under_their_top_ancestor(self):
+        table = self.datatable(search='grandchild', expanded={'parent': 50, 'child2': 50})
+        self.assertEqual([('parent', False), ('child2', False), ('grandchild', True)],
+                         [(row['uuid'], row['tree']['matched']) for row in table['data']])
+        self.assertEqual(1, table['recordsFiltered'])
+        self.assertEqual(2, table['recordsTotal'])
+
+    def test_paging_counts_top_level_tasks(self):
+        table = self.datatable(start=1, length=1, expanded={'parent': 50})
+        self.assertEqual(['parent', 'child1', 'child2'], [row['uuid'] for row in table['data']])
+
+    def test_malformed_expanded_tasks_are_ignored(self):
+        params = {'draw': 1, 'start': 0, 'length': 10, 'search[value]': '',
+                  'order[0][column]': 0, 'columns[0][data]': 'name',
+                  'order[0][dir]': 'asc', 'tree': '1', 'tree_expanded': '{broken'}
+        r = self.post('/tasks/datatable', body=params)
+        self.assertEqual(200, r.code)
+        self.assertEqual(2, len(json.loads(r.body.decode('utf-8'))['data']))
+
+    def test_invalid_search_returns_inline_error(self):
+        table = self.datatable(search='(')
+        self.assertEqual([], table['data'])
+        self.assertEqual(2, table['recordsTotal'])
+        self.assertIn('searchError', table)
+
+    def test_flat_layout_is_unchanged(self):
+        table = self.datatable(tree='')
+        self.assertEqual(5, table['recordsTotal'])
+        self.assertEqual(5, len(table['data']))
+        self.assertNotIn('tree', table['data'][0])
+
+    def test_task_page_lists_children_oldest_first(self):
+        r = self.get('/task/parent')
+        self.assertEqual(200, r.code)
+        body = r.body.decode('utf-8')
+        self.assertLess(body.index('/task/child1'), body.index('/task/child2'))
+        self.assertNotIn('/task/grandchild', body)
+
+    def test_task_page_without_children_has_no_children_row(self):
+        r = self.get('/task/other')
+        self.assertEqual(200, r.code)
+        self.assertNotIn('>Children<', r.body.decode('utf-8'))

@@ -78,7 +78,7 @@
         <dd><pre class="detail-code"><code>{{ getattr(task, 'result', '') }}</code></pre></dd>
       </div>
       {% for name in task._fields %}
-      {% if name not in ['name', 'uuid', 'state', 'args', 'kwargs', 'result'] and getattr(task, name, None) is not None %}
+      {% if name not in ['name', 'uuid', 'state', 'args', 'kwargs', 'result'] and getattr(task, name, None) is not None and (name != 'children' or task_children) %}
       <div class="detail-row{% if name == 'traceback' %} detail-row-code{% end %}">
         <dt>{{ humanize(name) }}</dt>
         <dd>
@@ -103,8 +103,8 @@
           {% elif name in ['parent_id', 'root_id'] %}
           {% raw task_link(reverse_url('task', getattr(task, name, None)), getattr(task, name, None)) %}
           {% elif name == 'children' %}
-            {% for child in getattr(task, name, {}) %}
-            {% raw task_link(reverse_url('task', child.id), child.id) %}<br>
+            {% for child_id in task_children %}
+            {% raw task_link(reverse_url('task', child_id), child_id) %}<br>
             {% end %}
           {% else %}
           {{ getattr(task, name, None) }}

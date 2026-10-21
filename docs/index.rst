@@ -16,6 +16,7 @@ Contents
    install
    config
    tasks_filter
+   task_hierarchy
    auth
    reverse-proxy
    prometheus-integration

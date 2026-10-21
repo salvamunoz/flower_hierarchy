@@ -363,10 +363,23 @@ class TaskSearchEngine:
     def matching_ids(self, query, candidates=None):
         return self._evaluate(parse_query(query), candidates)
 
-    # pylint: disable=too-many-arguments,too-many-locals
+    # pylint: disable=too-many-arguments
     def search(self, tasks, query='', *, task_type=None, worker=None, state=None,
                received_start=None, received_end=None, sort_by=None,
                descending=False, offset=0, limit=None):
+        task_map = getattr(tasks, 'data', tasks)
+        task_ids = self.filter(
+            tasks, query, task_type=task_type, worker=worker, state=state,
+            received_start=received_start, received_end=received_end)
+        return SearchPage(
+            self.order(task_map, task_ids, sort_by=sort_by, descending=descending,
+                       offset=offset, limit=limit),
+            len(task_ids), len(task_map))
+
+    # pylint: disable=too-many-arguments
+    def filter(self, tasks, query='', *, task_type=None, worker=None, state=None,
+               received_start=None, received_end=None):
+        "Ids of the tasks that match query and the given filters"
         task_map = getattr(tasks, 'data', tasks)
         task_ids = set(self.documents)
         task_ids.intersection_update(task_map.keys())
@@ -388,8 +401,12 @@ class TaskSearchEngine:
                     task_map[task_id], received_start, received_end)
             }
 
-        task_ids = self.matching_ids(query, task_ids)
+        return self.matching_ids(query, task_ids)
 
+    @staticmethod
+    def order(task_map, task_ids, *, sort_by=None, descending=False, offset=0,
+              limit=None):
+        "The page of task_ids from offset, sorted by sort_by or last event"
         filtered_count = len(task_ids)
         ordered_ids = list(task_ids)
         offset = max(offset, 0)
@@ -409,8 +426,7 @@ class TaskSearchEngine:
             ordered_ids = select(end, ordered_ids, key=key)
         else:
             ordered_ids.sort(key=key, reverse=descending)
-        return SearchPage(
-            ordered_ids[offset:end], filtered_count, len(task_map))
+        return ordered_ids[offset:end]
 
     def _evaluate(self, expression, candidates=None):
         universe = set(self.documents) if candidates is None else candidates

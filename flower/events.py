@@ -16,6 +16,7 @@ from prometheus_client import Gauge, Histogram
 from tornado.ioloop import PeriodicCallback
 
 from .options import options
+from .utils.hierarchy import TaskHierarchy
 from .utils.search import TaskSearchEngine
 
 logger = logging.getLogger(__name__)
@@ -114,11 +115,16 @@ class EventsState(State):
         self.counter = collections.defaultdict(Counter)
         self.metrics = get_prometheus_metrics()
         self.search_engine = TaskSearchEngine()
+        self.hierarchy = TaskHierarchy()
+        self.rebuild_indexes()
+
+    def rebuild_indexes(self):
         self.search_engine.rebuild(self.tasks.items())
+        self.hierarchy.rebuild(self.tasks.items())
 
     def _clear_tasks(self, ready=True):
         super()._clear_tasks(ready)
-        self.search_engine.rebuild(self.tasks.items())
+        self.rebuild_indexes()
 
     def _eviction_candidate(self, task_id):
         # Celery discards the least recently used task when a new one
@@ -131,12 +137,25 @@ class EventsState(State):
     def _index_task(self, task, evicted):
         if evicted is not None and evicted not in self.tasks:
             self.search_engine.remove(evicted)
+            self.hierarchy.remove(evicted)
         self.search_engine.upsert(task)
+        self.hierarchy.link(task.uuid, task.parent_id)
+
+    def _without_unreliable_parent(self, event):
+        # A retry or Task.replace sends the task again with itself as parent,
+        # which would replace the parent the task was first sent with
+        parent_id = event.get('parent_id')
+        if parent_id and not self.hierarchy.accepts(event.get('uuid'), parent_id):
+            event = dict(event)
+            del event['parent_id']
+        return event
 
     def event(self, event):
         event_type, worker = event['type'], event['hostname']
         is_task = event_type.startswith('task-')
         evicted = self._eviction_candidate(event.get('uuid')) if is_task else None
+        if is_task:
+            event = self._without_unreliable_parent(event)
 
         super().event(event)
         self.counter[worker][event_type] += 1
@@ -175,6 +194,8 @@ class Events(threading.Thread):
                 # A restored state keeps the limit it was saved with
                 self.state.max_tasks_in_memory = self.state.tasks.limit = max_tasks_in_memory
                 self.state.tasks.update()
+                # A lower limit evicts tasks the indexes were built with
+                self.state.rebuild_indexes()
 
             if state_save_interval:
                 self.state_save_timer = PeriodicCallback(self.save_state,

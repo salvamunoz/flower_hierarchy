@@ -4,7 +4,8 @@ import logging
 from tornado import web
 
 from ..utils.search import QuerySyntaxError
-from ..utils.tasks import as_dict, get_task_by_id, search_tasks
+from ..utils.tasks import (as_dict, get_task_by_id, parse_expanded, search_task_tree, search_tasks,
+                           task_children)
 from ..views import BaseHandler
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class TaskView(BaseHandler):
         self.render(
             "task.html",
             task=task,
+            task_children=task_children(self.application.events, task_id),
             read_only=self.application.options.read_only,
         )
 
@@ -38,6 +40,10 @@ class TasksDataTable(BaseHandler):
         column = self.get_argument('order[0][column]', type=int, required=True)
         sort_by = self.get_argument(f'columns[{column}][data]', '', type=str)
         sort_order = self.get_argument('order[0][dir]', '', type=str) == 'desc'
+
+        if self.get_argument('tree', '') == '1':
+            self.write_tree(draw, search, sort_by, sort_order, start, length)
+            return
 
         try:
             page = search_tasks(
@@ -70,6 +76,48 @@ class TasksDataTable(BaseHandler):
             filtered_tasks.append(task_dict)
 
         self.write({"draw": draw, "data": filtered_tasks,
+                    "recordsTotal": page.total_count,
+                    "recordsFiltered": page.filtered_count})
+
+    # pylint: disable=too-many-arguments
+    def write_tree(self, draw, search, sort_by, descending, start, length):
+        "Top-level tasks are the records, the expanded tasks' children follow them"
+        events = self.application.events
+        task_map = getattr(events.state.tasks, 'data', events.state.tasks)
+        try:
+            page = search_task_tree(
+                events, search=search, sort_by=sort_by,
+                descending=descending, offset=start, limit=length,
+                expanded=parse_expanded(
+                    self.get_argument('tree_expanded', '', escape=False)))
+        except QuerySyntaxError as exc:
+            self.write({
+                "draw": draw,
+                "data": [],
+                "recordsTotal": events.state.hierarchy.count_tops(task_map),
+                "recordsFiltered": 0,
+                "searchError": str(exc)})
+            return
+
+        rows = []
+        for task_id, tree in page.rows:
+            if task_id is None:
+                # Stands for the children the limit left out
+                rows.append({'uuid': f"{tree['parent_id']}:more", 'tree': tree})
+                continue
+            task = task_map.get(task_id)
+            if task is None:
+                continue
+            task_dict = as_dict(self.format_task((task_id, task))[1])
+            if task_dict.get('worker'):
+                task_dict['worker'] = task_dict['worker'].hostname
+            # The tree info replaces the unordered list of children ids,
+            # which a task with many children would make heavy
+            task_dict.pop('children', None)
+            task_dict['tree'] = tree
+            rows.append(task_dict)
+
+        self.write({"draw": draw, "data": rows,
                     "recordsTotal": page.total_count,
                     "recordsFiltered": page.filtered_count})
 

@@ -640,6 +640,84 @@ List (seen) task types
         self.write(response)
 
 
+class TaskTree(BaseTaskHandler):
+    MAX_NODES = 10000
+    MAX_DEPTH = 300
+
+    @web.authenticated
+    def get(self, taskid):
+        """
+Get a task and its descendants as a tree
+
+Children are the tasks that report this task as their ``parent_id``: tasks it
+sent with ``delay``/``apply_async``, the next step of a chain, groups and chords
+it applied. They are ordered oldest first. Only tasks still in Flower's memory
+are included.
+
+**Example request**:
+
+.. sourcecode:: http
+
+  GET /api/task/tree/9e7b8d3c-6f2a-4f0e-9a51-0d4b8f1c2a7e HTTP/1.1
+  Host: localhost:5555
+
+**Example response**:
+
+.. sourcecode:: http
+
+  HTTP/1.1 200 OK
+  Content-Type: application/json; charset=UTF-8
+
+  {
+      "count": 2,
+      "truncated": false,
+      "tree": {
+          "uuid": "9e7b8d3c-6f2a-4f0e-9a51-0d4b8f1c2a7e",
+          "name": "tasks.process_order",
+          "state": "SUCCESS",
+          "parent_id": null,
+          "root_id": "9e7b8d3c-6f2a-4f0e-9a51-0d4b8f1c2a7e",
+          "received": 1700000000.12,
+          "started": 1700000000.13,
+          "runtime": 0.52,
+          "worker": "celery@worker1",
+          "children_count": 1,
+          "children": [
+              {
+                  "uuid": "4c1d2e3f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+                  "name": "tasks.charge_card",
+                  "state": "SUCCESS",
+                  "parent_id": "9e7b8d3c-6f2a-4f0e-9a51-0d4b8f1c2a7e",
+                  "root_id": "9e7b8d3c-6f2a-4f0e-9a51-0d4b8f1c2a7e",
+                  "received": 1700000000.4,
+                  "started": 1700000000.41,
+                  "runtime": 1.3,
+                  "worker": "celery@worker2",
+                  "children_count": 0,
+                  "children": []
+              }
+          ]
+      }
+  }
+
+:query max_nodes: maximum number of tasks in the tree (default 1000, at most 10000)
+:query max_depth: maximum number of levels below the task (default 100, at most 300)
+:reqheader Authorization: optional OAuth token to authenticate
+:statuscode 200: no error
+:statuscode 401: unauthorized request
+:statuscode 404: unknown task
+        """
+        max_nodes = self.get_argument('max_nodes', 1000, type=int)
+        max_depth = self.get_argument('max_depth', 100, type=int)
+        tree = tasks.task_tree(
+            self.application.events, taskid,
+            max_nodes=min(max(max_nodes, 1), self.MAX_NODES),
+            max_depth=min(max(max_depth, 0), self.MAX_DEPTH))
+        if tree is None:
+            raise HTTPError(404, f"Unknown task '{taskid}'")
+        self.write(tree)
+
+
 class TaskInfo(BaseTaskHandler):
     @web.authenticated
     def get(self, taskid):

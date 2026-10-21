@@ -515,3 +515,50 @@ class TaskTests(BaseApiTestCase):
             'Substring search terms must contain at least 3 characters '
             'at position 0.',
             error['error'])
+
+
+class TaskTreeTests(BaseApiTestCase):
+    def setUp(self):
+        super().setUp()
+        state = EventsState()
+        events = []
+        for task_id, parent in (('root', None), ('child1', 'root'), ('child2', 'root'),
+                                ('grandchild', 'child1')):
+            for event in task_succeeded_events(worker='worker1', id=task_id, name=task_id):
+                event['parent_id'] = parent
+                event['root_id'] = 'root'
+                events.append(event)
+        for i, e in enumerate(events):
+            e['clock'] = i
+            e['local_received'] = time.time()
+            state.event(e)
+        self._app.events.state = state
+
+    def test_task_tree(self):
+        r = self.get('/api/task/tree/root')
+        self.assertEqual(200, r.code)
+        body = json.loads(r.body)
+        self.assertEqual(4, body['count'])
+        self.assertFalse(body['truncated'])
+        tree = body['tree']
+        self.assertEqual(('root', 'root', states.SUCCESS, None),
+                         (tree['uuid'], tree['name'], tree['state'], tree['parent_id']))
+        self.assertEqual(['child1', 'child2'], [c['uuid'] for c in tree['children']])
+        self.assertEqual(['grandchild'], [c['uuid'] for c in tree['children'][0]['children']])
+        self.assertEqual('worker1', tree['children'][0]['worker'])
+
+    def test_subtree_and_limits(self):
+        r = self.get('/api/task/tree/child1')
+        self.assertEqual(['grandchild'], [c['uuid'] for c in json.loads(r.body)['tree']['children']])
+
+        body = json.loads(self.get('/api/task/tree/root?max_nodes=2').body)
+        self.assertEqual(2, body['count'])
+        self.assertTrue(body['truncated'])
+
+        body = json.loads(self.get('/api/task/tree/root?max_depth=0').body)
+        self.assertEqual([], body['tree']['children'])
+        self.assertEqual(2, body['tree']['children_count'])
+        self.assertTrue(body['truncated'])
+
+    def test_unknown_task(self):
+        self.assertEqual(404, self.get('/api/task/tree/missing').code)

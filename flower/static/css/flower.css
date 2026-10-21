@@ -675,15 +675,32 @@ body.app-body {
   font-variant-numeric: tabular-nums;
 }
 
+.tasks-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
 .task-state-filters {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: thin;
 }
 
-.task-state-filter {
+.task-view-controls,
+.task-view-options {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.task-state-filter,
+.task-toolbar-button {
   flex: 0 0 auto;
   padding: 0.45rem 0.8rem;
   color: var(--flower-text-muted);
@@ -694,20 +711,162 @@ body.app-body {
   border-radius: 999px;
 }
 
-.task-state-filter:hover {
+.task-state-filter:hover,
+.task-toolbar-button:hover {
   color: var(--bs-body-color);
   border-color: var(--bs-primary);
 }
 
-.task-state-filter.active {
+.task-state-filter.active,
+.task-toolbar-button.active {
   color: var(--bs-primary);
   background: var(--bs-primary-bg-subtle);
   border-color: var(--bs-primary-border-subtle);
 }
 
+.task-live-toggle .status-dot {
+  display: inline-block;
+  margin-right: 0.25rem;
+  vertical-align: 0.05em;
+}
+
 .task-state-started {
   color: #fff;
   background-color: #2563eb;
+}
+
+/* Tree layout of the tasks table: guides, toggles and subtree summaries in the first column */
+.task-tree-cell {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  white-space: nowrap;
+}
+
+.task-tree-guide,
+.task-tree-branch,
+.task-tree-toggle,
+.task-tree-toggle-spacer {
+  position: relative;
+  flex: 0 0 1.25rem;
+  align-self: stretch;
+}
+
+/* Lines reach past the cell padding so rows of any height join up */
+.task-tree-guide-line::before,
+.task-tree-branch::before {
+  position: absolute;
+  top: -1.25rem;
+  bottom: -1.25rem;
+  left: 0.55rem;
+  content: "";
+  border-left: 1px solid var(--bs-border-color);
+}
+
+.task-tree-branch-last::before {
+  bottom: 50%;
+}
+
+.task-tree-branch::after {
+  position: absolute;
+  top: 50%;
+  right: 0.1rem;
+  left: 0.55rem;
+  content: "";
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.task-tree-depth {
+  margin-right: 0.35rem;
+  color: var(--flower-text-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--flower-text-muted);
+  background: none;
+  border: 0;
+  border-radius: 0.25rem;
+}
+
+.task-tree-toggle:hover,
+.task-tree-toggle:focus-visible {
+  color: var(--bs-primary);
+  background: var(--bs-primary-bg-subtle);
+}
+
+.task-tree-toggle svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.task-tree-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+.task-tree-content {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin-left: 0.25rem;
+}
+
+.task-tree-summary {
+  display: inline-flex;
+  gap: 0.35rem;
+  color: var(--flower-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-tree-summary-failed {
+  color: var(--flower-danger);
+}
+
+.task-tree-summary-active {
+  color: var(--flower-active);
+}
+
+.task-tree-missing-parent {
+  color: var(--flower-warning);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.task-tree-more {
+  padding: 0;
+  margin-left: 0.25rem;
+  color: var(--bs-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+}
+
+.task-tree-more:hover {
+  text-decoration: underline;
+}
+
+/* Ancestors listed only because a task below them matched the search */
+.task-tree-context > td {
+  opacity: 0.6;
+}
+
+.tasks-live-refresh .dataTables_processing {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-tree-toggle svg {
+    transition: none;
+  }
 }
 
 .workers-table-card,
