@@ -502,14 +502,79 @@ class TaskHierarchyTests(unittest.TestCase):
 
 class ParseExpandedTests(unittest.TestCase):
     def test_parse(self):
-        self.assertEqual({'a': 50, 'b': 1, 'c': 10000, 'd': 50},
-                         parse_expanded('{"a": 50, "b": -3, "c": 10000000, "d": "x"}'))
+        self.assertEqual(({'a': 50, 'b': 1, 'c': 10000, 'd': 50, 'e': 0}, set()),
+                         parse_expanded('{"a": 50, "b": -3, "c": 10000000, "d": "x", "e": 0}'))
+
+    def test_parse_subtrees(self):
+        self.assertEqual(({'a': 50, 'b': 120, 'c': 50}, {'a', 'b'}),
+                         parse_expanded('{"a": "all", "b": "all:120", "c": "allx"}'))
 
     def test_malformed_values_are_dropped(self):
         for value in ('', 'not json', '[1, 2]', '"text"', 'null'):
             with self.subTest(value=value):
-                self.assertEqual({}, parse_expanded(value))
+                self.assertEqual(({}, set()), parse_expanded(value))
 
     def test_entries_are_capped(self):
         value = '{' + ','.join(f'"{index}": 1' for index in range(20)) + '}'
-        self.assertEqual(5, len(parse_expanded(value, max_entries=5)))
+        self.assertEqual(5, len(parse_expanded(value, max_entries=5)[0]))
+
+
+class SubtreeTests(StateMixin, unittest.TestCase):
+    """A chain of steps with a branch: step1 > step2 > (step3 > step4, side)"""
+
+    def setUp(self):
+        super().setUp()
+        self.execute('step1')
+        self.execute('step2', parent='step1', root='step1')
+        self.execute('step3', parent='step2', root='step1')
+        self.execute('step4', parent='step3', root='step1')
+        self.execute('side', parent='step2', root='step1')
+        self.execute('other')
+
+    def rows(self, expanded, subtrees=()):
+        page = search_task_tree(FakeEvents(self.state), sort_by='received',
+                                expanded=expanded, subtrees=set(subtrees))
+        return [(info['depth'], task_id) for task_id, info in page.rows], dict(page.rows)
+
+    def test_expanding_a_subtree_opens_every_level(self):
+        outline, rows = self.rows({'step1': 50}, subtrees={'step1'})
+        self.assertEqual([(0, 'step1'), (1, 'step2'), (2, 'step3'), (3, 'step4'),
+                          (2, 'side'), (0, 'other')], outline)
+        self.assertTrue(rows['step1']['subtree'])
+        self.assertFalse(rows['step1']['in_subtree'])
+        self.assertTrue(rows['step3']['in_subtree'])
+        self.assertTrue(rows['step3']['expanded'])
+
+    def test_subtree_of_a_child(self):
+        outline, _ = self.rows({'step1': 50, 'step2': 50}, subtrees={'step2'})
+        self.assertEqual([(0, 'step1'), (1, 'step2'), (2, 'step3'), (3, 'step4'),
+                          (2, 'side'), (0, 'other')], outline)
+        outline, _ = self.rows({'step2': 50}, subtrees={'step2'})
+        # step2 is hidden while step1 is collapsed
+        self.assertEqual([(0, 'step1'), (0, 'other')], outline)
+
+    def test_task_collapsed_inside_an_expanded_subtree(self):
+        outline, rows = self.rows({'step1': 50, 'step3': 0}, subtrees={'step1'})
+        self.assertEqual([(0, 'step1'), (1, 'step2'), (2, 'step3'), (2, 'side'),
+                          (0, 'other')], outline)
+        self.assertFalse(rows['step3']['expanded'])
+        self.assertEqual(1, rows['step3']['children'])
+
+    def test_collapsed_task_without_subtree_stays_collapsed(self):
+        outline, _ = self.rows({'step1': 0})
+        self.assertEqual([(0, 'step1'), (0, 'other')], outline)
+
+    def test_limit_applies_at_every_level(self):
+        for index in range(3):
+            self.execute(f'leaf{index}', parent='step4', root='step1')
+        page = search_task_tree(FakeEvents(self.state), sort_by='received',
+                                expanded={'step1': 50, 'step4': 2}, subtrees={'step1'})
+        more = [info for task_id, info in page.rows if task_id is None]
+        self.assertEqual([('step4', 1, 2)], [(m['parent_id'], m['more'], m['limit']) for m in more])
+
+    def test_row_cap_still_applies(self):
+        task_map = self.state.tasks.data
+        rows = self.state.hierarchy.flatten(['step1'], task_map, {'step1': 50},
+                                            subtrees={'step1'}, max_rows=2)
+        self.assertEqual(['step1', 'step2', 'step3', 'side'], [task_id for task_id, _ in rows])
+        self.assertFalse(dict(rows)['step3']['expanded'])

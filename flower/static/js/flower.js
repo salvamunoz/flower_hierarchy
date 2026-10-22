@@ -719,7 +719,10 @@
         TASK_TREE_MAX_GUIDES = 8,
         TASK_TREE_ACTIVE_STATES = ['PENDING', 'RECEIVED', 'STARTED', 'RETRY'],
         CHEVRON_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">' +
-            '<path d="M5.7 2.3a1 1 0 0 0-1.4 1.4L8.6 8l-4.3 4.3a1 1 0 1 0 1.4 1.4l5-5a1 1 0 0 0 0-1.4l-5-5Z"/></svg>';
+            '<path d="M5.7 2.3a1 1 0 0 0-1.4 1.4L8.6 8l-4.3 4.3a1 1 0 1 0 1.4 1.4l5-5a1 1 0 0 0 0-1.4l-5-5Z"/></svg>',
+        EXPAND_ALL_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">' +
+            '<path d="M2.3 2.3a1 1 0 0 1 1.4 0L8 6.6l4.3-4.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4Z"/>' +
+            '<path d="M2.3 7.3a1 1 0 0 1 1.4 0L8 11.6l4.3-4.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4Z"/></svg>';
 
     // Browser storage can be missing or throw (private windows, blocked
     // storage), the table works without it
@@ -748,9 +751,12 @@
         }
     }
 
-    function setTaskExpanded(expanded, taskId, limit) {
+    // Each expanded task maps to how many children to list, 0 keeps a task
+    // collapsed inside an expanded subtree, and "all:<count>" also expands
+    // every task below it
+    function setTaskExpanded(expanded, taskId, value) {
         delete expanded[taskId];
-        expanded[taskId] = limit;
+        expanded[taskId] = value;
         // Forget the tasks expanded longest ago, keys keep insertion order
         var ids = Object.keys(expanded);
         ids.slice(0, Math.max(ids.length - TASK_TREE_MAX_EXPANDED, 0)).forEach(function (id) {
@@ -813,18 +819,28 @@
                 tree.more.toLocaleString() + ' hidden</button></span>';
         }
 
+        var taskName = full.name || full.uuid,
+            allExpanded = tree.subtree && tree.expanded;
         if (tree.children) {
             var label = (tree.expanded ? 'Hide ' : 'Show ') + tree.children.toLocaleString() +
-                ' child task' + (tree.children === 1 ? '' : 's') + ' of ' + (full.name || full.uuid);
+                ' child task' + (tree.children === 1 ? '' : 's') + ' of ' + taskName;
             html += '<button type="button" class="task-tree-toggle" data-task-id="' +
-                htmlEscapeEntities(full.uuid) + '" aria-expanded="' + tree.expanded + '" aria-label="' +
-                htmlEscapeEntities(label) + '" title="' + htmlEscapeEntities(label) + '">' + CHEVRON_ICON + '</button>';
+                htmlEscapeEntities(full.uuid) + '" data-in-subtree="' + tree.in_subtree + '" aria-expanded="' +
+                tree.expanded + '" aria-label="' + htmlEscapeEntities(label) + '" title="' +
+                htmlEscapeEntities(label + ' (Alt+click: all levels)') + '">' + CHEVRON_ICON + '</button>';
         } else {
             html += '<span class="task-tree-toggle-spacer"></span>';
         }
 
         html += '<span class="task-tree-content">' + (content === null || content === undefined ? '' : content) +
             taskTreeSummary(tree);
+        if (tree.children) {
+            var allLabel = htmlEscapeEntities((allExpanded ? 'Collapse all levels below ' : 'Expand all levels below ') +
+                taskName);
+            html += '<button type="button" class="task-tree-expand-all" data-task-id="' +
+                htmlEscapeEntities(full.uuid) + '" aria-pressed="' + allExpanded + '" aria-label="' + allLabel +
+                '" title="' + allLabel + '">' + EXPAND_ALL_ICON + '</button>';
+        }
         if (tree.missing_parent_id) {
             var parentTitle = htmlEscapeEntities('Started by task ' + tree.missing_parent_id +
                 ', which is no longer in Flower\'s memory');
@@ -1213,6 +1229,27 @@
             }
         });
 
+        function redrawTree(focusSelector) {
+            saveTaskTreeSettings(treeSettings);
+            focusAfterDraw = focusSelector;
+            reloadTasks(false);
+        }
+
+        // Tasks shut inside a subtree only stay shut while it is open: once
+        // the subtree closes, or opens fully again, they're forgotten
+        function forgetCollapsedBelow(taskId) {
+            var rows = tasksTable.rows().data().toArray(),
+                index = rows.findIndex(function (row) {
+                    return row.uuid === taskId;
+                });
+            for (var i = index + 1; index !== -1 && i < rows.length && rows[i].tree &&
+                    rows[i].tree.depth > rows[index].tree.depth; i += 1) {
+                if (treeSettings.expanded[rows[i].uuid] === 0) {
+                    delete treeSettings.expanded[rows[i].uuid];
+                }
+            }
+        }
+
         function toggleTask(button, expand) {
             var taskId = button.getAttribute('data-task-id'),
                 expanded = button.getAttribute('aria-expanded') === 'true';
@@ -1220,31 +1257,56 @@
                 return;
             }
             if (expanded) {
-                delete treeSettings.expanded[taskId];
-            } else {
-                setTaskExpanded(treeSettings.expanded, taskId, TASK_TREE_CHILDREN_PAGE);
+                forgetCollapsedBelow(taskId);
             }
-            saveTaskTreeSettings(treeSettings);
-            focusAfterDraw = '.task-tree-toggle[data-task-id="' + CSS.escape(taskId) + '"]';
-            reloadTasks(false);
+            if (!expanded) {
+                setTaskExpanded(treeSettings.expanded, taskId, TASK_TREE_CHILDREN_PAGE);
+            } else if (button.getAttribute('data-in-subtree') === 'true') {
+                // A task above expands everything below it, so say this one stays shut
+                setTaskExpanded(treeSettings.expanded, taskId, 0);
+            } else {
+                delete treeSettings.expanded[taskId];
+            }
+            redrawTree('.task-tree-toggle[data-task-id="' + CSS.escape(taskId) + '"]');
         }
 
-        $('#tasks-table').on('click', '.task-tree-toggle', function () {
-            toggleTask(this);
+        function toggleSubtree(taskId, focusSelector) {
+            var current = String(treeSettings.expanded[taskId] || '');
+            forgetCollapsedBelow(taskId);
+            if (current.indexOf('all') === 0) {
+                delete treeSettings.expanded[taskId];
+            } else {
+                setTaskExpanded(treeSettings.expanded, taskId, 'all');
+            }
+            redrawTree(focusSelector + '[data-task-id="' + CSS.escape(taskId) + '"]');
+        }
+
+        $('#tasks-table').on('click', '.task-tree-toggle', function (event) {
+            if (event.altKey || event.shiftKey) {
+                toggleSubtree(this.getAttribute('data-task-id'), '.task-tree-toggle');
+            } else {
+                toggleTask(this);
+            }
         });
         $('#tasks-table').on('keydown', '.task-tree-toggle', function (event) {
             if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
                 event.preventDefault();
                 toggleTask(this, event.key === 'ArrowRight');
+            } else if (event.key === '*') {
+                event.preventDefault();
+                toggleSubtree(this.getAttribute('data-task-id'), '.task-tree-toggle');
             }
+        });
+        $('#tasks-table').on('click', '.task-tree-expand-all', function () {
+            toggleSubtree(this.getAttribute('data-task-id'), '.task-tree-expand-all');
         });
         $('#tasks-table').on('click', '.task-tree-more', function () {
             var parentId = this.getAttribute('data-parent-id'),
-                limit = parseInt(this.getAttribute('data-limit'), 10) || 0;
-            setTaskExpanded(treeSettings.expanded, parentId, limit + TASK_TREE_CHILDREN_PAGE);
-            saveTaskTreeSettings(treeSettings);
-            focusAfterDraw = '.task-tree-toggle[data-task-id="' + CSS.escape(parentId) + '"]';
-            reloadTasks(false);
+                limit = (parseInt(this.getAttribute('data-limit'), 10) || 0) + TASK_TREE_CHILDREN_PAGE,
+                current = String(treeSettings.expanded[parentId] || '');
+            setTaskExpanded(treeSettings.expanded, parentId,
+                current.indexOf('all') === 0 ? 'all:' + limit : limit);
+            redrawTree('.task-tree-toggle[data-task-id="' + CSS.escape(parentId) + '"]');
         });
 
         $('.task-view-options [data-task-view]').on('click', function () {

@@ -84,12 +84,13 @@ class TasksDataTable(BaseHandler):
         "Top-level tasks are the records, the expanded tasks' children follow them"
         events = self.application.events
         task_map = getattr(events.state.tasks, 'data', events.state.tasks)
+        expanded, subtrees = parse_expanded(
+            self.get_argument('tree_expanded', '', escape=False))
         try:
             page = search_task_tree(
                 events, search=search, sort_by=sort_by,
                 descending=descending, offset=start, limit=length,
-                expanded=parse_expanded(
-                    self.get_argument('tree_expanded', '', escape=False)))
+                expanded=expanded, subtrees=subtrees)
         except QuerySyntaxError as exc:
             self.write({
                 "draw": draw,

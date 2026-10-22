@@ -505,3 +505,14 @@ class TasksTreeTest(AsyncHTTPTestCase):
         r = self.get('/task/other')
         self.assertEqual(200, r.code)
         self.assertNotIn('>Children<', r.body.decode('utf-8'))
+
+    def test_expanding_a_subtree(self):
+        table = self.datatable(expanded={'parent': 'all'})
+        self.assertEqual(
+            [('other', 0), ('parent', 0), ('child1', 1), ('child2', 1), ('grandchild', 2)],
+            [(row['uuid'], row['tree']['depth']) for row in table['data']])
+        self.assertTrue(table['data'][1]['tree']['subtree'])
+
+        table = self.datatable(expanded={'parent': 'all', 'child2': 0})
+        self.assertEqual(['other', 'parent', 'child1', 'child2'],
+                         [row['uuid'] for row in table['data']])

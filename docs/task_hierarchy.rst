@@ -5,6 +5,11 @@ The tasks page lists each task under the task that started it. A task with
 children has a toggle that shows or hides them, and a summary of the states
 below it, so a failure deep in a workflow shows on its top-level task.
 
+To open every level below a task at once, use the double chevron next to it
+(shown when the row has the pointer or focus), Alt+click or Shift+click its
+toggle, or press ``*`` on the toggle. Collapsing a task inside an opened
+subtree keeps it shut until the subtree is closed or opened again.
+
 Use the **Tree** and **Flat** buttons above the table to switch layouts, or
 open ``/tasks?view=flat``. **Live** reloads the table every 3 seconds, or every
 ``N`` seconds with ``/tasks?autorefresh=N``. The layout, the expanded tasks and
@@ -51,8 +56,9 @@ With a search, the table lists the top-level task of each match, and expanded
 tasks show only the children that match or lead to a match. Tasks listed only
 because something below them matched are dimmed.
 
-An expanded task lists 50 children at first, with a row to show more. A
-response lists at most 2000 rows.
+An expanded task lists 50 children at first, with a row to show more, also
+when its whole subtree is opened. A response lists at most 2000 rows: past
+that, tasks show collapsed.
 
 API
 ---

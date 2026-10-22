@@ -810,6 +810,46 @@ body.app-body {
   transform: rotate(90deg);
 }
 
+.task-tree-expand-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  color: var(--flower-text-muted);
+  background: none;
+  border: 0;
+  border-radius: 0.25rem;
+  opacity: 0;
+  align-self: center;
+}
+
+/* Shown with the row it acts on, and always where there is no hover */
+.task-tree-row:hover .task-tree-expand-all,
+.task-tree-row:focus-within .task-tree-expand-all,
+.task-tree-expand-all[aria-pressed="true"] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .task-tree-expand-all {
+    opacity: 1;
+  }
+}
+
+.task-tree-expand-all:hover,
+.task-tree-expand-all:focus-visible,
+.task-tree-expand-all[aria-pressed="true"] {
+  color: var(--bs-primary);
+  background: var(--bs-primary-bg-subtle);
+}
+
+.task-tree-expand-all svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
 .task-tree-content {
   display: inline-flex;
   gap: 0.5rem;

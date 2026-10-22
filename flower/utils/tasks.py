@@ -57,7 +57,7 @@ class TreePage:
 
 # pylint: disable=too-many-arguments
 def search_task_tree(events, search=None, sort_by=None, descending=False,
-                     offset=0, limit=None, expanded=None):
+                     offset=0, limit=None, expanded=None, subtrees=frozenset()):
     """A page of top-level tasks with the expanded tasks' children below them.
 
     With a search, the top level lists the top-most ancestor of each matching
@@ -74,7 +74,7 @@ def search_task_tree(events, search=None, sort_by=None, descending=False,
         task_map, top_ids, sort_by=sort_by, descending=descending,
         offset=offset, limit=limit)
     rows = hierarchy.flatten(
-        page, task_map, expanded or {},
+        page, task_map, expanded or {}, subtrees=subtrees,
         visible=visible if filtering else None,
         matched=matched if filtering else None)
     total = hierarchy.count_tops(task_map) if filtering else len(top_ids)
@@ -82,7 +82,12 @@ def search_task_tree(events, search=None, sort_by=None, descending=False,
 
 
 def parse_expanded(value, max_entries=1000):
-    """Expanded tasks sent by the tasks page, as {task id: children to list}.
+    """Expanded tasks sent by the tasks page.
+
+    Each task id maps to how many of its children to list, 0 for a task kept
+    collapsed inside an expanded subtree, or "all" ("all:<count>") to expand
+    the task and every task below it. Returns {task id: children to list} and
+    the set of tasks whose subtree is expanded.
 
     The page keeps them in the browser, so anything malformed is dropped
     rather than failing the request.
@@ -90,15 +95,21 @@ def parse_expanded(value, max_entries=1000):
     try:
         expanded = json.loads(value) if value else {}
     except ValueError:
-        return {}
+        return {}, set()
     if not isinstance(expanded, dict):
-        return {}
+        return {}, set()
     result = {}
+    subtrees = set()
     for task_id, count in islice(expanded.items(), max_entries):
-        if isinstance(count, bool) or not isinstance(count, int):
+        task_id = str(task_id)
+        if isinstance(count, str) and count.partition(':')[0] == 'all':
+            subtrees.add(task_id)
+            count = count.partition(':')[2]
+            count = int(count) if count.isdigit() else CHILDREN_PAGE_SIZE
+        elif isinstance(count, bool) or not isinstance(count, int):
             count = CHILDREN_PAGE_SIZE
-        result[str(task_id)] = min(max(count, 1), MAX_CHILDREN_LIMIT)
-    return result
+        result[task_id] = 0 if count == 0 else min(max(count, 1), MAX_CHILDREN_LIMIT)
+    return result, subtrees
 
 
 def task_tree(events, task_id, max_nodes=1000, max_depth=100):

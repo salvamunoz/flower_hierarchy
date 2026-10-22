@@ -197,24 +197,26 @@ class TaskHierarchy:
 
     # pylint: disable=too-many-arguments,too-many-locals
     def flatten(self, top_ids, task_map, expanded, visible=None, matched=None,
-                max_rows=MAX_TREE_ROWS):
+                max_rows=MAX_TREE_ROWS, subtrees=frozenset()):
         """Rows of the trees under top_ids, parents before their children.
 
         expanded maps the id of each expanded task to how many of its children
-        to list. visible, when given, limits the children to those tasks, and
-        matched marks the rows that matched a search. Returns a list of
-        (task id, tree info) pairs; a task id of None stands for the children
-        a limit left out.
+        to list, 0 for a task kept collapsed below an expanded subtree. Every
+        task below a task in subtrees is expanded too. visible, when given,
+        limits the children to those tasks, and matched marks the rows that
+        matched a search. Returns a list of (task id, tree info) pairs; a task
+        id of None stands for the children a limit left out.
         """
         rows = []
         summaries = self.summaries(top_ids, task_map)
         for top in top_ids:
             # Each entry: task id, depth, whether each ancestor below the top
             # has later siblings (to draw guides), whether it's the last child,
-            # and for the row standing for children left out, what it stands for
-            stack = [(top, 0, (), True, None)]
+            # whether a task above it expands its whole subtree, and for the
+            # row standing for children left out, what it stands for
+            stack = [(top, 0, (), True, False, None)]
             while stack:
-                task_id, depth, guides, last, more = stack.pop()
+                task_id, depth, guides, last, in_subtree, more = stack.pop()
                 if more is not None:
                     parent_id, hidden, shown = more
                     rows.append((None, {
@@ -222,6 +224,11 @@ class TaskHierarchy:
                         'parent_id': parent_id, 'more': hidden, 'limit': shown}))
                     continue
                 limit = expanded.get(task_id)
+                if limit is None and in_subtree:
+                    limit = CHILDREN_PAGE_SIZE
+                elif limit == 0:
+                    limit = None
+                children_in_subtree = in_subtree or task_id in subtrees
                 children, total = self.ordered_children(
                     task_id, task_map, visible, limit)
                 is_expanded = (limit is not None and total > 0 and
@@ -235,6 +242,8 @@ class TaskHierarchy:
                     'parent_id': self.parent_in(task_id, task_map),
                     'missing_parent_id': self.missing_parent(task_id, task_map),
                     'matched': matched is None or task_id in matched,
+                    'subtree': task_id in subtrees,
+                    'in_subtree': in_subtree,
                 }
                 summary = summaries.get(task_id)
                 if summary:
@@ -245,9 +254,10 @@ class TaskHierarchy:
                 child_guides = guides + (not last,) if depth else ()
                 hidden = total - len(children)
                 if hidden:
-                    stack.append((None, depth + 1, child_guides, True,
+                    stack.append((None, depth + 1, child_guides, True, False,
                                   (task_id, hidden, len(children))))
                 for index in range(len(children) - 1, -1, -1):
                     is_last = not hidden and index == len(children) - 1
-                    stack.append((children[index], depth + 1, child_guides, is_last, None))
+                    stack.append((children[index], depth + 1, child_guides, is_last,
+                                  children_in_subtree, None))
         return rows
