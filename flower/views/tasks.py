@@ -100,27 +100,27 @@ class TasksDataTable(BaseHandler):
                 "searchError": str(exc)})
             return
 
-        rows = []
-        for task_id, tree in page.rows:
-            if task_id is None:
-                # Stands for the children the limit left out
-                rows.append({'uuid': f"{tree['parent_id']}:more", 'tree': tree})
-                continue
-            task = task_map.get(task_id)
-            if task is None:
-                continue
-            task_dict = as_dict(self.format_task((task_id, task))[1])
-            if task_dict.get('worker'):
-                task_dict['worker'] = task_dict['worker'].hostname
-            # The tree info replaces the unordered list of children ids,
-            # which a task with many children would make heavy
-            task_dict.pop('children', None)
-            task_dict['tree'] = tree
-            rows.append(task_dict)
-
-        self.write({"draw": draw, "data": rows,
+        rows = (self.tree_row(task_map, task_id, tree) for task_id, tree in page.rows)
+        self.write({"draw": draw, "data": [row for row in rows if row is not None],
                     "recordsTotal": page.total_count,
                     "recordsFiltered": page.filtered_count})
+
+    def tree_row(self, task_map, task_id, tree):
+        "A row of the tree layout, None for a task no longer in the state"
+        if task_id is None:
+            # Stands for the children the limit left out
+            return {'uuid': f"{tree['parent_id']}:more", 'tree': tree}
+        task = task_map.get(task_id)
+        if task is None:
+            return None
+        task_dict = as_dict(self.format_task((task_id, task))[1])
+        if task_dict.get('worker'):
+            task_dict['worker'] = task_dict['worker'].hostname
+        # The tree info replaces the unordered list of children ids,
+        # which a task with many children would make heavy
+        task_dict.pop('children', None)
+        task_dict['tree'] = tree
+        return task_dict
 
     @web.authenticated
     def post(self):
