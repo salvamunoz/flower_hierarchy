@@ -1,0 +1,251 @@
+/* GNOME / libadwaita inspired design, applied with <html data-design="gnome">.
+   Header bar, boxed list cards, flat buttons that fill on hover, linked
+   buttons and Adwaita's blue accent. Only overrides flower.css. */
+
+[data-design="gnome"] {
+  --adw-accent: #3584e4;
+  --adw-accent-fg: #1c71d8;
+  --adw-window: #fafafb;
+  --adw-view: #ffffff;
+  --adw-headerbar: #ffffff;
+  --adw-headerbar-shade: rgba(0, 0, 6, 0.12);
+  --adw-fg: rgba(0, 0, 6, 0.8);
+  --adw-dim: rgba(0, 0, 6, 0.55);
+  --adw-border: rgba(0, 0, 6, 0.07);
+  --adw-button: rgba(0, 0, 6, 0.06);
+  --adw-button-hover: rgba(0, 0, 6, 0.1);
+  --adw-button-checked: rgba(0, 0, 6, 0.16);
+  --adw-card-shadow: 0 0 0 1px rgba(0, 0, 6, 0.03), 0 1px 3px 1px rgba(0, 0, 6, 0.07), 0 2px 6px 2px rgba(0, 0, 6, 0.03);
+
+  --bs-body-bg: var(--adw-window);
+  --bs-body-color: var(--adw-fg);
+  --bs-border-color: var(--adw-border);
+  --bs-primary: var(--adw-accent-fg);
+  --bs-primary-rgb: 28, 113, 216;
+  --bs-primary-bg-subtle: rgba(53, 132, 228, 0.15);
+  --bs-primary-border-subtle: rgba(53, 132, 228, 0.3);
+  --bs-link-color: var(--adw-accent-fg);
+  --bs-link-color-rgb: 28, 113, 216;
+  --bs-link-hover-color: #1a5fb4;
+  --bs-body-font-family: "Adwaita Sans", Cantarell, Inter, "Noto Sans", "Ubuntu", system-ui, sans-serif;
+  --flower-surface: var(--adw-view);
+  --flower-surface-subtle: rgba(0, 0, 6, 0.03);
+  --flower-text-muted: var(--adw-dim);
+  --flower-active: var(--adw-accent);
+  --flower-success: #1b8553;
+  --flower-warning: #9c6e03;
+  --flower-danger: #c01c28;
+  --flower-radius: 0.75rem;
+  --flower-shadow: var(--adw-card-shadow);
+}
+
+[data-design="gnome"][data-bs-theme="dark"] {
+  --adw-accent: #3584e4;
+  --adw-accent-fg: #78aeed;
+  --adw-window: #222226;
+  --adw-view: #1d1d20;
+  --adw-headerbar: #2e2e32;
+  --adw-headerbar-shade: rgba(0, 0, 6, 0.36);
+  --adw-fg: #ffffff;
+  --adw-dim: rgba(255, 255, 255, 0.55);
+  --adw-border: rgba(255, 255, 255, 0.07);
+  --adw-button: rgba(255, 255, 255, 0.1);
+  --adw-button-hover: rgba(255, 255, 255, 0.15);
+  --adw-button-checked: rgba(255, 255, 255, 0.24);
+  --adw-card-shadow: 0 0 0 1px rgba(0, 0, 6, 0.09), 0 1px 3px 1px rgba(0, 0, 6, 0.09), 0 2px 6px 2px rgba(0, 0, 6, 0.04);
+
+  --bs-primary-rgb: 120, 174, 237;
+  --bs-link-color-rgb: 120, 174, 237;
+  --bs-link-hover-color: #99c1f1;
+  --bs-primary-bg-subtle: rgba(53, 132, 228, 0.25);
+  --flower-surface: #36363a;
+  --flower-surface-subtle: rgba(255, 255, 255, 0.04);
+  --flower-success: #8ff0a4;
+  --flower-warning: #f8e45c;
+  --flower-danger: #ff7b63;
+}
+
+[data-design="gnome"] body {
+  font-family: var(--bs-body-font-family);
+}
+
+/* Header bar */
+[data-design="gnome"] .app-navbar,
+[data-design="gnome"][data-bs-theme="dark"] .app-navbar {
+  min-height: 3.5rem;
+  background: var(--adw-headerbar);
+  border-bottom: 1px solid var(--adw-headerbar-shade);
+  box-shadow: 0 1px 5px rgba(0, 0, 6, 0.07);
+  backdrop-filter: none;
+}
+
+[data-design="gnome"] .app-nav .nav-link {
+  padding: 0.375rem 0.875rem;
+  color: var(--adw-fg);
+  font-weight: 700;
+  border-radius: 0.375rem;
+}
+
+[data-design="gnome"] .app-nav .nav-link:hover {
+  background: var(--adw-button-hover);
+}
+
+[data-design="gnome"] .app-nav .nav-link.active {
+  color: var(--adw-fg);
+  background: var(--adw-button-checked);
+}
+
+[data-design="gnome"] .page-eyebrow {
+  color: var(--adw-fg);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Flat buttons that fill on hover, checked toggles darker */
+[data-design="gnome"] .task-state-filter,
+[data-design="gnome"] .task-toolbar-button {
+  height: 2.125rem;
+  padding: 0 0.875rem;
+  color: var(--adw-fg);
+  font-weight: 700;
+  background: var(--adw-button);
+  border: 0;
+  border-radius: 0.375rem;
+}
+
+[data-design="gnome"] .task-state-filter:hover,
+[data-design="gnome"] .task-toolbar-button:hover {
+  color: var(--adw-fg);
+  background: var(--adw-button-hover);
+}
+
+[data-design="gnome"] .task-state-filter.active,
+[data-design="gnome"] .task-toolbar-button.active {
+  color: var(--adw-fg);
+  background: var(--adw-button-checked);
+}
+
+/* Linked buttons */
+[data-design="gnome"] .task-view-options {
+  gap: 1px;
+}
+
+[data-design="gnome"] .task-view-options .task-toolbar-button {
+  border-radius: 0;
+}
+
+[data-design="gnome"] .task-view-options .task-toolbar-button:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+[data-design="gnome"] .task-view-options .task-toolbar-button:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+/* Live as a suggested action while on */
+[data-design="gnome"] .task-live-toggle.active {
+  color: #ffffff;
+  background: var(--adw-accent);
+}
+
+[data-design="gnome"] .task-live-toggle.active .status-dot {
+  background: #ffffff;
+  box-shadow: none;
+}
+
+/* Boxed list cards */
+[data-design="gnome"] .workers-table-card,
+[data-design="gnome"] .tasks-table-card,
+[data-design="gnome"] .broker-table-card,
+[data-design="gnome"] .metric-card,
+[data-design="gnome"] .detail-card,
+[data-design="gnome"] .worker-panel {
+  background: var(--flower-surface);
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: var(--adw-card-shadow);
+}
+
+[data-design="gnome"] .tasks-table thead th,
+[data-design="gnome"] .workers-table thead th,
+[data-design="gnome"] .broker-table thead th {
+  color: var(--adw-dim);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-design="gnome"] .tasks-table,
+[data-design="gnome"] .workers-table,
+[data-design="gnome"] .broker-table {
+  --bs-table-hover-bg: var(--flower-surface-subtle);
+  --bs-table-border-color: var(--adw-border);
+}
+
+/* Search entry */
+[data-design="gnome"] .tasks-page .dataTables_filter input,
+[data-design="gnome"] .workers-page .dataTables_filter input,
+[data-design="gnome"] .tasks-page div.dataTables_wrapper .dataTables_filter input {
+  min-height: 2.375rem;
+  background: var(--adw-button);
+  border: 0;
+  border-radius: 0.375rem;
+}
+
+[data-design="gnome"] .tasks-page .dataTables_filter input:focus,
+[data-design="gnome"] .workers-page .dataTables_filter input:focus {
+  outline: 2px solid color-mix(in srgb, var(--adw-accent) 50%, transparent);
+  outline-offset: -2px;
+  box-shadow: none;
+}
+
+[data-design="gnome"] .tasks-page .dataTables_length select,
+[data-design="gnome"] .workers-page .dataTables_length select {
+  background-color: var(--adw-button);
+  border: 0;
+  border-radius: 0.375rem;
+}
+
+[data-design="gnome"] .dataTables_wrapper .dataTables_paginate .paginate_button,
+[data-design="gnome"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  color: var(--adw-fg) !important;
+  font-weight: 700;
+  background: transparent;
+  border: 0;
+  border-radius: 0.375rem;
+}
+
+[data-design="gnome"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+[data-design="gnome"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  color: var(--adw-fg) !important;
+  background: var(--adw-button-checked);
+  border: 0;
+}
+
+[data-design="gnome"] .task-state-disc {
+  stroke-width: 0;
+  fill: color-mix(in srgb, var(--task-state-color) 20%, transparent);
+}
+
+[data-design="gnome"] .task-state-icon-failure .task-state-disc,
+[data-design="gnome"] .task-state-icon-success .task-state-disc {
+  fill: var(--task-state-color);
+}
+
+[data-design="gnome"][data-bs-theme="dark"] .task-state-icon-failure,
+[data-design="gnome"][data-bs-theme="dark"] .task-state-icon-success {
+  color: #1d1d20;
+}
+
+[data-design="gnome"] .task-state-icon-started .task-state-disc {
+  fill: none;
+  stroke-width: 1.75;
+}
+
+[data-design="gnome"] .task-tree-toggle,
+[data-design="gnome"] .task-tree-expand-all {
+  border-radius: 0.375rem;
+}

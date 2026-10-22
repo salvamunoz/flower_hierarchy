@@ -67,11 +67,11 @@
     selectedTheme = getStoredTheme() || "system";
     applyTheme(selectedTheme);
 
-    // Preview of alternative designs: ?design=md3, ?design=glass or
-    // ?design=classic picks one and the browser keeps it
+    // Preview of alternative designs: ?design=md3, glass, gnome, kde,
+    // terminal or classic picks one and the browser keeps it
     (function () {
         var designKey = "flower-design",
-            designs = ["classic", "md3", "glass"],
+            designs = ["classic", "md3", "glass", "gnome", "kde", "terminal"],
             design = new URLSearchParams(window.location.search).get("design");
 
         try {
