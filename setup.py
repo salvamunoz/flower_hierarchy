@@ -6,17 +6,22 @@ from setuptools import setup, find_packages
 
 
 version = re.compile(r'VERSION\s*=\s*\((.*?)\)')
+local_version = re.compile(r"LOCAL_VERSION\s*=\s*'(.*?)'")
 
 
 def get_package_version():
     "returns package version without importing it"
     base = os.path.abspath(os.path.dirname(__file__))
+    release = local = None
     with open(os.path.join(base, "flower/__init__.py")) as initf:
         for line in initf:
             m = version.match(line.strip())
-            if not m:
-                continue
-            return ".".join(m.groups()[0].split(", "))
+            if m:
+                release = ".".join(m.groups()[0].split(", "))
+            m = local_version.match(line.strip())
+            if m:
+                local = m.group(1)
+    return f"{release}+{local}" if local else release
 
 
 def get_requirements(filename):
