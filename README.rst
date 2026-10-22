@@ -1,19 +1,58 @@
-Flower
-======
+flower-hierarchy
+================
 
-.. image:: https://img.shields.io/pypi/dm/flower.svg
-    :target: https://pypistats.org/packages/flower
-    :alt: PyPI - Downloads
-.. image:: https://img.shields.io/docker/pulls/mher/flower.svg
-    :target: https://hub.docker.com/r/mher/flower
-    :alt: Docker Pulls
-.. image:: https://github.com/mher/flower/workflows/Build/badge.svg
-    :target: https://github.com/mher/flower/actions
-.. image:: https://img.shields.io/pypi/v/flower.svg
-    :target: https://pypi.python.org/pypi/flower
+.. image:: https://img.shields.io/pypi/v/flower-hierarchy.svg
+    :target: https://pypi.org/project/flower-hierarchy/
+    :alt: PyPI
+.. image:: https://github.com/salvamunoz/flower_hierarchy/workflows/Build/badge.svg
+    :target: https://github.com/salvamunoz/flower_hierarchy/actions
+    :alt: Build
 
-Flower is an open-source web application for monitoring and managing Celery clusters.
-It provides real-time information about the status of Celery workers and tasks.
+A fork of `Flower <https://github.com/mher/flower>`_, the web application for
+monitoring and managing Celery clusters, that shows each task under the task
+that started it.
+
+Flower lists tasks one after the other. In flower-hierarchy, the tasks a task
+sends with ``delay``/``apply_async``, the steps of a chain, groups and chords
+appear below it as a tree you can expand and collapse, with a summary of what
+happened below each task::
+
+    ▼ process_order        SUCCESS   3 below
+        ├─ validate_order  SUCCESS
+        ├─ charge_card     SUCCESS
+        └─ send_email      SUCCESS
+    ▼ import_data          SUCCESS   3 below · 1 failed
+        └─ download        SUCCESS
+            └─ parse       SUCCESS
+                └─ persist FAILURE
+
+.. image:: https://raw.githubusercontent.com/salvamunoz/flower_hierarchy/master/docs/screenshots/task-hierarchy.png
+    :alt: The tasks page with a chain of tasks expanded
+
+Everything else works as in Flower: same command, options, API and Docker
+usage.
+
+What's different from Flower
+----------------------------
+
+- **Tree layout of the tasks page**, recursive to any depth, built from the
+  ``parent_id`` that Celery puts in its events. No extra setup on the workers
+  and any broker works.
+- **Expand all levels** of a task at once: the double chevron next to it,
+  Alt+click or Shift+click on its toggle, or ``*`` on the keyboard.
+- **Subtree summaries**: a task shows how many tasks are below it and how many
+  failed or are still running, so a failure deep in a workflow is visible from
+  the top.
+- **Search keeps the context**: matching tasks are listed under their
+  top-level task, with the tasks leading to them dimmed.
+- **Live** button that reloads the table every few seconds, and **Tree** /
+  **Flat** buttons to switch to Flower's list.
+- ``GET /api/task/tree/<task-id>``: a task and its descendants as nested JSON.
+- Retries and ``Task.replace`` no longer make a task its own child.
+
+See `Task hierarchy <https://github.com/salvamunoz/flower_hierarchy/blob/master/docs/task_hierarchy.rst>`_
+for how relations are found, what Celery's events can't tell (for instance
+groups sent from outside a task) and the limits on large trees.
 
 Features
 --------
@@ -22,6 +61,7 @@ Features
 
 - Real-time monitoring using Celery Events
     - View task progress and history
+    - View tasks under the task that started them, as an expandable tree
     - View task details (arguments, start time, runtime, and more)
 - Remote Control
     - View worker status and statistics
@@ -46,36 +86,55 @@ Features
 Installation
 ------------
 
-Installing `flower` with `pip <http://www.pip-installer.org/>`_ is simple ::
+flower-hierarchy replaces Flower: both provide the ``flower`` Python package,
+so remove Flower first if it is installed ::
 
-    $ pip install flower
+    $ pip uninstall flower
+    $ pip install flower-hierarchy
 
-The development version can be installed from Github ::
+The development version can be installed from GitHub ::
 
-    $ pip install https://github.com/mher/flower/zipball/master#egg=flower
+    $ pip install git+https://github.com/salvamunoz/flower_hierarchy.git
+
+In a requirements file, list ``flower-hierarchy`` instead of ``flower``.
 
 Usage
 -----
 
-To run Flower, you need to provide the broker URL ::
+flower-hierarchy is started like Flower. Provide the broker URL ::
 
     $ celery --broker=amqp://guest:guest@localhost:5672// flower
 
-Or use the configuration of `celery application <https://docs.celeryq.dev/en/stable/userguide/application.html>`_  ::
+Or use the configuration of your `celery application <https://docs.celeryq.dev/en/stable/userguide/application.html>`_ ::
 
     $ celery -A tasks.app flower
+
+Workers must send task events, with ``-E`` or ``worker_send_task_events = True``.
 
 By default, flower runs on port 5555, which can be modified with the `port <https://flower.readthedocs.io/en/latest/config.html#port>`_ option ::
 
     $ celery -A tasks.app flower --port=5001
 
-You can also run Flower using the docker image ::
+The tasks page opens in the tree layout. ``/tasks?view=flat`` opens Flower's
+list, and ``/tasks?autorefresh=5`` turns on Live with a 5 second interval.
 
-    $ docker run -v $(pwd)/examples:/data -p 5555:5555 mher/flower celery --app=tasks.app flower
+Docker
+------
 
-In this example, Flower is using the `tasks.app` defined in the `examples/tasks.py <https://github.com/mher/flower/blob/master/examples/tasks.py>`_ file
+Build the image from this repository ::
+
+    $ docker build -t flower-hierarchy https://github.com/salvamunoz/flower_hierarchy.git
+    $ docker run -v $(pwd)/examples:/data -p 5555:5555 flower-hierarchy celery --app=tasks.app flower
+
+In this example, Flower is using the `tasks.app` defined in the `examples/tasks.py <https://github.com/salvamunoz/flower_hierarchy/blob/master/examples/tasks.py>`_ file
 
 .. install-end
+
+Versions
+--------
+
+Versions are the Flower release the fork is based on, followed by the fork's
+own release number: ``2.2.0.1`` is the first release on top of Flower 2.2.0.
 
 API
 ---
@@ -90,25 +149,27 @@ Or call a task by: ::
 
     $ curl -X POST -d '{"args":[1,2]}' http://localhost:5555/api/task/async-apply/tasks.add
 
-Or terminate a running task by: ::
+Or get a task and everything it started by: ::
 
-    $ curl -X POST -d 'terminate=True' http://localhost:5555/api/task/revoke/8a4da87b-e12b-4547-b89a-e92e4d1f8efd
+    $ curl http://localhost:5555/api/task/tree/8a4da87b-e12b-4547-b89a-e92e4d1f8efd
 
-For more info, see the `API Reference`_
+For more info, see Flower's `API Reference`_
 
 .. _API Reference: https://flower.readthedocs.io/en/latest/api.html
 
 Documentation
 -------------
 
-Documentation is available at `Read the Docs`_
+Flower's documentation applies to flower-hierarchy, see `Read the Docs`_.
+The tree layout is described in `docs/task_hierarchy.rst <https://github.com/salvamunoz/flower_hierarchy/blob/master/docs/task_hierarchy.rst>`_.
 
 .. _Read the Docs: https://flower.readthedocs.io
 
-License
--------
+Credits and license
+-------------------
 
-Flower is licensed under BSD 3-Clause License.
+flower-hierarchy is based on `Flower <https://github.com/mher/flower>`_ by
+Mher Movsisyan and its contributors, and keeps its BSD 3-Clause License.
 See the `License`_ file for the full license text.
 
-.. _`License`: https://github.com/mher/flower/blob/master/LICENSE
+.. _`License`: https://github.com/salvamunoz/flower_hierarchy/blob/master/LICENSE

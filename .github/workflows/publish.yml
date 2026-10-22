@@ -1,0 +1,77 @@
+name: Publish
+
+# A published GitHub release goes to PyPI. Running the workflow by hand sends
+# the build to TestPyPI instead, to try a release first.
+#
+# Uploads use PyPI trusted publishing, no token is stored: each index needs
+# this repository, this workflow (publish.yml) and the environment below
+# (pypi or testpypi) registered as a trusted publisher of flower-hierarchy.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.13'
+
+    - name: Run unit tests
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/dev.txt
+        python -m tests.unit
+
+    - name: Build the sdist and the wheel
+      run: |
+        pip install build twine
+        python -m build
+        twine check --strict dist/*
+
+    - name: Check the release tag matches the package version
+      if: github.event_name == 'release'
+      run: |
+        version=$(python -c "import flower; print(flower.__version__)")
+        if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+          echo "Release tag $GITHUB_REF_NAME does not match version $version" >&2
+          exit 1
+        fi
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: dist
+        path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'release' && 'pypi' || 'testpypi' }}
+      url: ${{ github.event_name == 'release' && 'https://pypi.org/project/flower-hierarchy/' || 'https://test.pypi.org/project/flower-hierarchy/' }}
+    permissions:
+      id-token: write
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: dist
+        path: dist/
+
+    - name: Publish to PyPI
+      if: github.event_name == 'release'
+      uses: pypa/gh-action-pypi-publish@release/v1
+
+    - name: Publish to TestPyPI
+      if: github.event_name != 'release'
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
