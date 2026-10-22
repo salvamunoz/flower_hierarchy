@@ -6,22 +6,17 @@ from setuptools import setup, find_packages
 
 
 version = re.compile(r'VERSION\s*=\s*\((.*?)\)')
-local_version = re.compile(r"LOCAL_VERSION\s*=\s*'(.*?)'")
 
 
 def get_package_version():
     "returns package version without importing it"
     base = os.path.abspath(os.path.dirname(__file__))
-    release = local = None
     with open(os.path.join(base, "flower/__init__.py")) as initf:
         for line in initf:
             m = version.match(line.strip())
-            if m:
-                release = ".".join(m.groups()[0].split(", "))
-            m = local_version.match(line.strip())
-            if m:
-                local = m.group(1)
-    return f"{release}+{local}" if local else release
+            if not m:
+                continue
+            return ".".join(m.groups()[0].split(", "))
 
 
 def get_requirements(filename):
@@ -49,13 +44,22 @@ classifiers = [s.strip() for s in classes.split('\n') if s]
 
 
 setup(
-    name='flower',
+    name='flower-hierarchy',
     version=get_package_version(),
-    description='Celery Flower',
+    description='Celery Flower with tasks shown under the task that started them',
     long_description=open('README.rst').read(),
     long_description_content_type="text/x-rst",
     author='Mher Movsisyan',
-    url='https://github.com/mher/flower',
+    maintainer='Salvador Muñoz',
+    maintainer_email='salva17y2@gmail.com',
+    url='https://github.com/salvamunoz/flower_hierarchy',
+    project_urls={
+        'Source': 'https://github.com/salvamunoz/flower_hierarchy',
+        'Issues': 'https://github.com/salvamunoz/flower_hierarchy/issues',
+        'Upstream': 'https://github.com/mher/flower',
+        'Documentation': 'https://flower.readthedocs.io',
+    },
+    keywords=['celery', 'flower', 'monitoring', 'task hierarchy', 'workflow'],
     license='BSD',
     classifiers=classifiers,
     python_requires=">=3.10",
