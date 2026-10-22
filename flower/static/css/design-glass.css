@@ -1,0 +1,251 @@
+/* Translucent "liquid glass" design, applied with <html data-design="glass">.
+   Glass (blur behind) only on the few bars and controls that float; the
+   cards and tables stay nearly opaque so dense text keeps its contrast and
+   a table reloading every few seconds doesn't repaint a blurred area. */
+
+[data-design="glass"] {
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-strong: rgba(255, 255, 255, 0.72);
+  --glass-rim: rgba(255, 255, 255, 0.75);
+  --glass-edge: rgba(15, 23, 42, 0.08);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
+  --glass-lift: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 28px rgba(15, 23, 42, 0.1);
+  --glass-blur: blur(22px) saturate(180%);
+  --glass-accent: #0a84ff;
+  --glass-card: rgba(255, 255, 255, 0.86);
+
+  --bs-body-color: #1d1d1f;
+  --bs-border-color: rgba(15, 23, 42, 0.1);
+  --bs-primary: #0a84ff;
+  --bs-primary-rgb: 10, 132, 255;
+  --bs-primary-bg-subtle: rgba(10, 132, 255, 0.14);
+  --bs-primary-border-subtle: rgba(10, 132, 255, 0.3);
+  --bs-link-color: #0066cc;
+  --bs-link-color-rgb: 0, 102, 204;
+  --bs-link-hover-color: #004f9e;
+  --bs-body-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable", system-ui, sans-serif;
+  --flower-surface: var(--glass-card);
+  --flower-surface-subtle: rgba(255, 255, 255, 0.5);
+  --flower-text-muted: #6e6e73;
+  --flower-active: #0a84ff;
+  --flower-success: #248a3d;
+  --flower-warning: #c93400;
+  --flower-danger: #d70015;
+  --flower-radius: 1.375rem;
+  --flower-shadow: var(--glass-lift);
+}
+
+[data-design="glass"][data-bs-theme="dark"] {
+  --glass-bg: rgba(40, 40, 46, 0.5);
+  --glass-bg-strong: rgba(44, 44, 50, 0.72);
+  --glass-rim: rgba(255, 255, 255, 0.14);
+  --glass-edge: rgba(0, 0, 0, 0.4);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+  --glass-lift: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 32px rgba(0, 0, 0, 0.35);
+  --glass-accent: #0a84ff;
+  --glass-card: rgba(28, 28, 32, 0.86);
+
+  --bs-body-color: #f5f5f7;
+  --bs-body-bg: #0b0b0f;
+  --bs-border-color: rgba(255, 255, 255, 0.1);
+  --bs-primary: #409cff;
+  --bs-primary-rgb: 64, 156, 255;
+  --bs-primary-bg-subtle: rgba(64, 156, 255, 0.2);
+  --bs-primary-border-subtle: rgba(64, 156, 255, 0.4);
+  --bs-link-color: #6cb4ff;
+  --bs-link-color-rgb: 108, 180, 255;
+  --bs-link-hover-color: #9ccbff;
+  --flower-surface-subtle: rgba(255, 255, 255, 0.05);
+  --flower-text-muted: #a1a1a6;
+  --flower-active: #409cff;
+  --flower-success: #30d158;
+  --flower-warning: #ff9f0a;
+  --flower-danger: #ff453a;
+}
+
+/* Something for the glass to bend: soft color fields fixed behind the page */
+[data-design="glass"] body {
+  font-family: var(--bs-body-font-family);
+  background:
+    radial-gradient(60rem 40rem at 8% -10%, rgba(52, 199, 89, 0.22), transparent 60%),
+    radial-gradient(50rem 36rem at 95% 0%, rgba(10, 132, 255, 0.2), transparent 60%),
+    radial-gradient(56rem 40rem at 60% 110%, rgba(175, 82, 222, 0.16), transparent 60%),
+    #f2f3f7;
+  background-attachment: fixed;
+}
+
+[data-design="glass"][data-bs-theme="dark"] body {
+  background:
+    radial-gradient(60rem 40rem at 8% -10%, rgba(48, 209, 88, 0.16), transparent 60%),
+    radial-gradient(50rem 36rem at 95% 0%, rgba(10, 132, 255, 0.2), transparent 60%),
+    radial-gradient(56rem 40rem at 60% 110%, rgba(191, 90, 242, 0.14), transparent 60%),
+    #0b0b0f;
+  background-attachment: fixed;
+}
+
+/* Floating glass: the bar, the toolbar capsules, search and pagination */
+[data-design="glass"] .app-navbar,
+[data-design="glass"][data-bs-theme="dark"] .app-navbar {
+  margin: 0.75rem clamp(0.5rem, 2vw, 1.5rem) 0;
+  top: 0.75rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-rim);
+  border-radius: 1.5rem;
+  box-shadow: var(--glass-highlight), var(--glass-lift);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+[data-design="glass"] .app-nav .nav-link {
+  border-radius: 999px;
+}
+
+[data-design="glass"] .app-nav .nav-link.active {
+  color: var(--bs-body-color);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--glass-highlight), 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+[data-design="glass"] .page-eyebrow {
+  color: var(--flower-text-muted);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+[data-design="glass"] .task-state-filter,
+[data-design="glass"] .task-toolbar-button {
+  color: var(--bs-body-color);
+  font-weight: 500;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-rim);
+  box-shadow: var(--glass-highlight), 0 2px 10px rgba(15, 23, 42, 0.06);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+[data-design="glass"] .task-state-filter.active,
+[data-design="glass"] .task-toolbar-button.active {
+  color: #ffffff;
+  background: color-mix(in srgb, var(--glass-accent) 82%, transparent);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 14px rgba(10, 132, 255, 0.35);
+}
+
+/* Cards: a light glass rim around an almost opaque, unblurred surface */
+[data-design="glass"] .workers-table-card,
+[data-design="glass"] .tasks-table-card,
+[data-design="glass"] .broker-table-card,
+[data-design="glass"] .metric-card,
+[data-design="glass"] .detail-card,
+[data-design="glass"] .worker-panel {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-rim);
+  border-radius: 1.5rem;
+  box-shadow: var(--glass-highlight), var(--glass-lift);
+}
+
+[data-design="glass"] .tasks-table thead th,
+[data-design="glass"] .workers-table thead th,
+[data-design="glass"] .broker-table thead th {
+  color: var(--flower-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-design="glass"] .tasks-table,
+[data-design="glass"] .workers-table,
+[data-design="glass"] .broker-table {
+  --bs-table-hover-bg: rgba(10, 132, 255, 0.06);
+}
+
+[data-design="glass"] .tasks-page .dataTables_filter input,
+[data-design="glass"] .workers-page .dataTables_filter input,
+[data-design="glass"] .tasks-page div.dataTables_wrapper .dataTables_filter input {
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-rim);
+  border-radius: 999px;
+  box-shadow: var(--glass-highlight);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+[data-design="glass"] .tasks-page .dataTables_length select,
+[data-design="glass"] .workers-page .dataTables_length select {
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-rim);
+  border-radius: 999px;
+  box-shadow: var(--glass-highlight);
+}
+
+[data-design="glass"] .dataTables_wrapper .dataTables_paginate .paginate_button,
+[data-design="glass"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  color: var(--bs-body-color) !important;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+[data-design="glass"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+[data-design="glass"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  color: #ffffff !important;
+  background: var(--glass-accent);
+  border: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 12px rgba(10, 132, 255, 0.35);
+}
+
+/* State icons with a glossy top light */
+[data-design="glass"] .task-state-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.18));
+}
+
+[data-design="glass"] .task-state-disc {
+  stroke: rgba(255, 255, 255, 0.6);
+  stroke-width: 1;
+  fill: color-mix(in srgb, var(--task-state-color) 22%, rgba(255, 255, 255, 0.6));
+}
+
+[data-design="glass"][data-bs-theme="dark"] .task-state-disc {
+  stroke: rgba(255, 255, 255, 0.18);
+  fill: color-mix(in srgb, var(--task-state-color) 28%, rgba(40, 40, 46, 0.6));
+}
+
+[data-design="glass"] .task-state-icon-failure .task-state-disc,
+[data-design="glass"] .task-state-icon-success .task-state-disc {
+  fill: var(--task-state-color);
+}
+
+[data-design="glass"] .task-tree-toggle,
+[data-design="glass"] .task-tree-expand-all {
+  border-radius: 999px;
+}
+
+/* No glass where the system asks for less transparency, or can't blur */
+@media (prefers-reduced-transparency: reduce) {
+  [data-design="glass"] {
+    --glass-bg: rgba(255, 255, 255, 0.97);
+    --glass-card: #ffffff;
+  }
+
+  [data-design="glass"][data-bs-theme="dark"] {
+    --glass-bg: rgba(36, 36, 40, 0.97);
+    --glass-card: #1c1c20;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  [data-design="glass"] {
+    --glass-bg: rgba(255, 255, 255, 0.92);
+  }
+
+  [data-design="glass"][data-bs-theme="dark"] {
+    --glass-bg: rgba(36, 36, 40, 0.92);
+  }
+}

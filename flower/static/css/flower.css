@@ -735,6 +735,79 @@ body.app-body {
   background-color: #2563eb;
 }
 
+/* Task states as icons: a tinted disc with the glyph in the state's color */
+.task-state-icon {
+  --task-state-color: var(--flower-text-muted);
+  display: inline-flex;
+  width: 1.375rem;
+  height: 1.375rem;
+  color: var(--task-state-color);
+  vertical-align: middle;
+}
+
+.task-state-icon svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.task-state-disc {
+  fill: color-mix(in srgb, var(--task-state-color) 14%, transparent);
+  stroke: var(--task-state-color);
+  stroke-width: 1.25;
+}
+
+.task-state-glyph {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.task-state-icon-success { --task-state-color: var(--flower-success); }
+.task-state-icon-failure { --task-state-color: var(--flower-danger); }
+.task-state-icon-started { --task-state-color: var(--flower-active); }
+.task-state-icon-retry { --task-state-color: var(--flower-warning); }
+
+.task-state-icon-failure .task-state-disc,
+.task-state-icon-success .task-state-disc {
+  fill: var(--task-state-color);
+}
+
+.task-state-icon-failure,
+.task-state-icon-success {
+  color: var(--flower-surface);
+}
+
+.task-state-icon-other .task-state-glyph {
+  stroke-width: 3;
+}
+
+/* A running task is a loading ring: a faint track with an arc turning on
+   it, held still when motion is reduced */
+.task-state-icon-started .task-state-disc {
+  fill: none;
+  stroke: color-mix(in srgb, var(--task-state-color) 25%, transparent);
+  stroke-width: 1.75;
+}
+
+.task-state-icon-started .task-state-glyph {
+  stroke-width: 2;
+  transform-origin: 8px 8px;
+  animation: task-state-spin 1.2s linear infinite;
+}
+
+@keyframes task-state-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-state-icon-started .task-state-glyph {
+    animation: none;
+  }
+}
+
 /* Tree layout of the tasks table: guides, toggles and subtree summaries in the first column */
 .task-tree-cell {
   display: inline-flex;

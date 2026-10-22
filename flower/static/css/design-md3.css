@@ -1,0 +1,253 @@
+/* Material Design 3 inspired design, applied with <html data-design="md3">.
+   Tonal palette from Flower's green seed; surfaces are told apart by tone,
+   not shadows. Only overrides flower.css, no extra scripts or fonts. */
+
+[data-design="md3"] {
+  --md-primary: #386a20;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #b8f397;
+  --md-on-primary-container: #072100;
+  --md-secondary-container: #d7e8cd;
+  --md-on-secondary-container: #121f0e;
+  --md-surface: #f8faf0;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #f2f5ea;
+  --md-surface-container: #eceee4;
+  --md-surface-container-high: #e6e9df;
+  --md-surface-container-highest: #e1e4d9;
+  --md-on-surface: #191d16;
+  --md-on-surface-variant: #43483e;
+  --md-outline: #73796d;
+  --md-outline-variant: #c3c8bb;
+  --md-error: #ba1a1a;
+
+  --bs-body-bg: var(--md-surface);
+  --bs-body-color: var(--md-on-surface);
+  --bs-border-color: var(--md-outline-variant);
+  --bs-primary: var(--md-primary);
+  --bs-primary-rgb: 56, 106, 32;
+  --bs-primary-bg-subtle: var(--md-secondary-container);
+  --bs-primary-border-subtle: var(--md-secondary-container);
+  --bs-link-color: var(--md-primary);
+  --bs-link-color-rgb: 56, 106, 32;
+  --bs-link-hover-color: var(--md-on-primary-container);
+  --bs-body-font-family: Roboto, "Google Sans Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --flower-surface: var(--md-surface-container-lowest);
+  --flower-surface-subtle: var(--md-surface-container-low);
+  --flower-text-muted: var(--md-on-surface-variant);
+  --flower-active: #3b5ba9;
+  --flower-success: #2e6b30;
+  --flower-warning: #8a5100;
+  --flower-danger: var(--md-error);
+  --flower-radius: 1rem;
+  --flower-shadow: none;
+}
+
+[data-design="md3"][data-bs-theme="dark"] {
+  --md-primary: #9dd67d;
+  --md-on-primary: #0f3900;
+  --md-primary-container: #205107;
+  --md-on-primary-container: #b8f397;
+  --md-secondary-container: #3b4b35;
+  --md-on-secondary-container: #d7e8cd;
+  --md-surface: #11140e;
+  --md-surface-container-lowest: #0c0f09;
+  --md-surface-container-low: #191d16;
+  --md-surface-container: #1d211a;
+  --md-surface-container-high: #282b24;
+  --md-surface-container-highest: #33362e;
+  --md-on-surface: #e1e4d9;
+  --md-on-surface-variant: #c3c8bb;
+  --md-outline: #8d9286;
+  --md-outline-variant: #43483e;
+  --md-error: #ffb4ab;
+
+  --bs-primary-rgb: 157, 214, 125;
+  --bs-link-color-rgb: 157, 214, 125;
+  --flower-surface: var(--md-surface-container-low);
+  --flower-surface-subtle: var(--md-surface-container);
+  --flower-active: #b0c6ff;
+  --flower-success: #88d982;
+  --flower-warning: #ffb870;
+}
+
+[data-design="md3"] body {
+  font-family: var(--bs-body-font-family);
+  letter-spacing: 0.01em;
+}
+
+/* Top app bar: a flat surface container, tabs as tonal pills */
+[data-design="md3"] .app-navbar,
+[data-design="md3"][data-bs-theme="dark"] .app-navbar {
+  background: var(--md-surface-container);
+  border-bottom: 0;
+  backdrop-filter: none;
+}
+
+[data-design="md3"] .app-nav .nav-link {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+}
+
+[data-design="md3"] .app-nav .nav-link.active {
+  color: var(--md-on-secondary-container);
+  background: var(--md-secondary-container);
+}
+
+[data-design="md3"] .page-eyebrow {
+  color: var(--md-on-surface-variant);
+  font-size: 1.375rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Filter chips: outlined, tonal with a check mark when selected */
+[data-design="md3"] .task-state-filter,
+[data-design="md3"] .task-toolbar-button {
+  height: 2rem;
+  padding: 0 1rem;
+  color: var(--md-on-surface-variant);
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--md-outline);
+  border-radius: 0.5rem;
+}
+
+[data-design="md3"] .task-state-filter.active {
+  padding-left: 0.625rem;
+  color: var(--md-on-secondary-container);
+  background: var(--md-secondary-container);
+  border-color: var(--md-secondary-container);
+}
+
+[data-design="md3"] .task-state-filter.active::before {
+  margin-right: 0.375rem;
+  content: "\2713";
+}
+
+/* Segmented button for the layout */
+[data-design="md3"] .task-view-options {
+  gap: 0;
+}
+
+[data-design="md3"] .task-view-options .task-toolbar-button {
+  border-radius: 0;
+}
+
+[data-design="md3"] .task-view-options .task-toolbar-button:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+[data-design="md3"] .task-view-options .task-toolbar-button:last-child {
+  margin-left: -1px;
+  border-radius: 0 999px 999px 0;
+}
+
+[data-design="md3"] .task-view-options .task-toolbar-button.active {
+  color: var(--md-on-secondary-container);
+  background: var(--md-secondary-container);
+  border-color: var(--md-outline);
+}
+
+[data-design="md3"] .task-view-options .task-toolbar-button.active::before {
+  margin-right: 0.375rem;
+  content: "\2713";
+}
+
+[data-design="md3"] .task-live-toggle {
+  border-radius: 0.5rem;
+}
+
+[data-design="md3"] .task-live-toggle.active {
+  color: var(--md-on-secondary-container);
+  background: var(--md-secondary-container);
+  border-color: var(--md-secondary-container);
+}
+
+/* Cards: filled surfaces with large corners, no outline or shadow */
+[data-design="md3"] .workers-table-card,
+[data-design="md3"] .tasks-table-card,
+[data-design="md3"] .broker-table-card,
+[data-design="md3"] .metric-card,
+[data-design="md3"] .detail-card,
+[data-design="md3"] .worker-panel {
+  background: var(--flower-surface);
+  border: 0;
+  border-radius: 1.5rem;
+  box-shadow: none;
+}
+
+[data-design="md3"] .tasks-table thead th,
+[data-design="md3"] .workers-table thead th,
+[data-design="md3"] .broker-table thead th {
+  color: var(--md-on-surface-variant);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+[data-design="md3"] .tasks-table,
+[data-design="md3"] .workers-table,
+[data-design="md3"] .broker-table {
+  --bs-table-hover-bg: color-mix(in srgb, var(--md-on-surface) 8%, transparent);
+  --bs-table-border-color: var(--md-outline-variant);
+}
+
+/* Search bar: a full pill on the highest container */
+[data-design="md3"] .tasks-page .dataTables_filter input,
+[data-design="md3"] .workers-page .dataTables_filter input,
+[data-design="md3"] .tasks-page div.dataTables_wrapper .dataTables_filter input {
+  min-height: 3.5rem;
+  padding: 0 1.5rem;
+  background: var(--md-surface-container-high);
+  border: 0;
+  border-radius: 999px;
+}
+
+[data-design="md3"] .tasks-page .dataTables_length select,
+[data-design="md3"] .workers-page .dataTables_length select {
+  background-color: var(--md-surface-container-high);
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+/* Pagination: circular state layers, the current page as primary */
+[data-design="md3"] .dataTables_wrapper .dataTables_paginate .paginate_button,
+[data-design="md3"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  min-width: 2.5rem;
+  color: var(--md-on-surface-variant) !important;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+}
+
+[data-design="md3"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+[data-design="md3"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  color: var(--md-on-primary) !important;
+  background: var(--md-primary);
+  border: 0;
+}
+
+/* State icons as tonal discs */
+[data-design="md3"] .task-state-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+[data-design="md3"] .task-state-disc {
+  stroke: none;
+  fill: color-mix(in srgb, var(--task-state-color) 18%, transparent);
+}
+
+[data-design="md3"] .task-state-icon-failure .task-state-disc,
+[data-design="md3"] .task-state-icon-success .task-state-disc {
+  fill: var(--task-state-color);
+}
+
+[data-design="md3"] .task-tree-toggle,
+[data-design="md3"] .task-tree-expand-all {
+  border-radius: 999px;
+}

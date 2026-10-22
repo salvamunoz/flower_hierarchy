@@ -67,6 +67,27 @@
     selectedTheme = getStoredTheme() || "system";
     applyTheme(selectedTheme);
 
+    // Preview of alternative designs: ?design=md3, ?design=glass or
+    // ?design=classic picks one and the browser keeps it
+    (function () {
+        var designKey = "flower-design",
+            designs = ["classic", "md3", "glass"],
+            design = new URLSearchParams(window.location.search).get("design");
+
+        try {
+            if (designs.indexOf(design) !== -1) {
+                window.localStorage.setItem(designKey, design);
+            } else {
+                design = window.localStorage.getItem(designKey);
+            }
+        } catch (error) {
+            // The design from the URL still applies to this page
+        }
+        if (design && design !== "classic" && designs.indexOf(design) !== -1) {
+            root.setAttribute("data-design", design);
+        }
+    }());
+
     document.addEventListener("DOMContentLoaded", function () {
         updateThemeMenu(selectedTheme);
         document.querySelectorAll("[data-bs-theme-value]").forEach(function (option) {
