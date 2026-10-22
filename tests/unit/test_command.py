@@ -84,6 +84,29 @@ class TestFlowerCommand(AsyncHTTPTestCase):
             with self.mock_option('broker_api', broker_api):
                 extract_settings()
 
+    def test_design(self):
+        with self.mock_option('design', 'classic'):
+            apply_options('flower', argv=['--design=glass'])
+            self.assertEqual('glass', options.design)
+
+    def test_design_read_from_env(self):
+        with self.mock_option('design', 'classic'), \
+                patch.dict(os.environ, {"FLOWER_DESIGN": "terminal"}):
+            apply_env_options()
+            self.assertEqual('terminal', options.design)
+
+    def test_valid_designs_accepted(self):
+        for design in flower_options.DESIGNS:
+            with self.mock_option('design', design):
+                extract_settings()
+
+    def test_invalid_design_exits(self):
+        for design in ['console', 'Glass', '']:
+            with self.mock_option('design', design):
+                with self.assertRaises(SystemExit) as cm:
+                    extract_settings()
+                self.assertEqual(1, cm.exception.code)
+
     def test_auto_refresh(self):
         with patch.dict(os.environ, {"FLOWER_AUTO_REFRESH": "false"}):
             apply_env_options()

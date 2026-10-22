@@ -1,0 +1,378 @@
+/* Terminal / TUI design (htop, btop, lazygit), applied with
+   <html data-design="terminal">. Gruvbox dark palette in both color modes,
+   monospaced text, square frames, reversed video for what's selected, box
+   drawing characters for the tree and glyphs for task states. Only
+   overrides flower.css. */
+
+[data-design="terminal"],
+[data-design="terminal"][data-bs-theme="dark"] {
+  color-scheme: dark;
+  --gb-bg0: #1d2021;
+  --gb-bg1: #282828;
+  --gb-bg2: #3c3836;
+  --gb-bg3: #504945;
+  --gb-fg: #ebdbb2;
+  --gb-fg-dim: #a89984;
+  --gb-gray: #928374;
+  --gb-red: #fb4934;
+  --gb-green: #b8bb26;
+  --gb-yellow: #fabd2f;
+  --gb-blue: #83a598;
+  --gb-aqua: #8ec07c;
+  --gb-orange: #fe8019;
+
+  --bs-body-bg: var(--gb-bg0);
+  --bs-body-bg-rgb: 29, 32, 33;
+  --bs-body-color: var(--gb-fg);
+  --bs-body-color-rgb: 235, 219, 178;
+  --bs-border-color: var(--gb-bg3);
+  --bs-primary: var(--gb-yellow);
+  --bs-primary-rgb: 250, 189, 47;
+  --bs-primary-bg-subtle: var(--gb-bg2);
+  --bs-primary-border-subtle: var(--gb-yellow);
+  --bs-link-color: var(--gb-aqua);
+  --bs-link-color-rgb: 142, 192, 124;
+  --bs-link-hover-color: var(--gb-yellow);
+  --bs-link-hover-color-rgb: 250, 189, 47;
+  --bs-body-font-family: "JetBrains Mono", "Fira Code", "Cascadia Mono", "DejaVu Sans Mono", "Ubuntu Mono", ui-monospace, monospace;
+  --bs-body-font-size: 0.875rem;
+  --flower-surface: var(--gb-bg0);
+  --flower-surface-subtle: var(--gb-bg1);
+  --flower-text-muted: var(--gb-gray);
+  --flower-active: var(--gb-blue);
+  --flower-success: var(--gb-green);
+  --flower-warning: var(--gb-orange);
+  --flower-danger: var(--gb-red);
+  --flower-radius: 0;
+  --flower-shadow: none;
+}
+
+/* Always dark, so no light/dark switch */
+[data-design="terminal"] .theme-menu-item {
+  display: none;
+}
+
+[data-design="terminal"] body {
+  font-family: var(--bs-body-font-family);
+  font-size: var(--bs-body-font-size);
+  background: var(--gb-bg0);
+}
+
+[data-design="terminal"] a {
+  text-decoration: none;
+}
+
+/* Top line like a status bar */
+[data-design="terminal"] .app-navbar,
+[data-design="terminal"][data-bs-theme="dark"] .app-navbar {
+  min-height: 2.75rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  background: var(--gb-bg1);
+  border-bottom: 1px solid var(--gb-bg3);
+  backdrop-filter: none;
+}
+
+[data-design="terminal"] .app-brand {
+  color: var(--gb-green);
+}
+
+[data-design="terminal"] .app-brand-mark {
+  border-radius: 0;
+  filter: grayscale(0.3);
+}
+
+[data-design="terminal"] .app-nav .nav-link {
+  padding: 0.25rem 0.625rem;
+  color: var(--gb-fg-dim);
+  font-weight: 400;
+  border-radius: 0;
+}
+
+[data-design="terminal"] .app-nav .nav-link::before {
+  content: "F" counter(nav-key) " ";
+  color: var(--gb-gray);
+}
+
+[data-design="terminal"] .app-nav {
+  counter-reset: nav-key;
+}
+
+[data-design="terminal"] .app-nav .nav-item {
+  counter-increment: nav-key;
+}
+
+[data-design="terminal"] .app-nav .nav-link:hover {
+  color: var(--gb-fg);
+  background: var(--gb-bg2);
+}
+
+[data-design="terminal"] .app-nav .nav-link.active,
+[data-design="terminal"] .app-nav .nav-link.active::before {
+  color: var(--gb-bg0);
+  background: var(--gb-aqua);
+}
+
+[data-design="terminal"] .app-nav-secondary .nav-link::before {
+  content: none;
+}
+
+[data-design="terminal"] .page-eyebrow {
+  color: var(--gb-yellow);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-design="terminal"] .page-eyebrow::before {
+  color: var(--gb-gray);
+  content: "$ celery ";
+}
+
+/* [ Buttons ] in brackets, reversed when selected */
+[data-design="terminal"] .task-state-filter,
+[data-design="terminal"] .task-toolbar-button {
+  height: auto;
+  padding: 0.125rem 0.375rem;
+  color: var(--gb-fg);
+  font-weight: 400;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+[data-design="terminal"] .task-state-filter::before,
+[data-design="terminal"] .task-toolbar-button::before {
+  color: var(--gb-gray);
+  content: "[";
+}
+
+[data-design="terminal"] .task-state-filter::after,
+[data-design="terminal"] .task-toolbar-button::after {
+  color: var(--gb-gray);
+  content: "]";
+}
+
+[data-design="terminal"] .task-state-filter:hover,
+[data-design="terminal"] .task-toolbar-button:hover {
+  color: var(--gb-yellow);
+  background: var(--gb-bg2);
+}
+
+[data-design="terminal"] .task-state-filter.active,
+[data-design="terminal"] .task-toolbar-button.active,
+[data-design="terminal"] .task-state-filter.active::before,
+[data-design="terminal"] .task-toolbar-button.active::before,
+[data-design="terminal"] .task-state-filter.active::after,
+[data-design="terminal"] .task-toolbar-button.active::after {
+  color: var(--gb-bg0);
+  background: var(--gb-yellow);
+}
+
+[data-design="terminal"] .task-live-toggle .status-dot {
+  border-radius: 0;
+}
+
+/* Square frames with a title on the top line */
+[data-design="terminal"] .workers-table-card,
+[data-design="terminal"] .tasks-table-card,
+[data-design="terminal"] .broker-table-card,
+[data-design="terminal"] .metric-card,
+[data-design="terminal"] .detail-card,
+[data-design="terminal"] .worker-panel {
+  background: var(--gb-bg0);
+  border: 1px solid var(--gb-bg3);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-design="terminal"] .tasks-table-card {
+  position: relative;
+  overflow: visible;
+  margin-top: 0.75rem;
+}
+
+[data-design="terminal"] .tasks-table-card::before {
+  position: absolute;
+  top: -0.7rem;
+  left: 0.75rem;
+  z-index: 1;
+  padding: 0 0.375rem;
+  color: var(--gb-aqua);
+  content: "┤ tasks ├";
+  background: var(--gb-bg0);
+}
+
+[data-design="terminal"] .tasks-table > :not(caption) > * > *,
+[data-design="terminal"] .workers-table > :not(caption) > * > *,
+[data-design="terminal"] .broker-table > :not(caption) > * > * {
+  padding: 0.3rem 0.75rem;
+  border-bottom-width: 0;
+}
+
+[data-design="terminal"] .tasks-table thead th,
+[data-design="terminal"] .workers-table thead th,
+[data-design="terminal"] .broker-table thead th {
+  color: var(--gb-bg0);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  background: var(--gb-green);
+}
+
+/* The current row in reverse video, like a TUI cursor */
+[data-design="terminal"] .tasks-table > tbody > tr:hover > *,
+[data-design="terminal"] .workers-table > tbody > tr:hover > * {
+  background: var(--gb-bg2);
+  box-shadow: none;
+}
+
+[data-design="terminal"] .tasks-page .dataTables_filter input,
+[data-design="terminal"] .workers-page .dataTables_filter input,
+[data-design="terminal"] .tasks-page div.dataTables_wrapper .dataTables_filter input {
+  min-height: 2rem;
+  color: var(--gb-fg);
+  background: var(--gb-bg1);
+  border: 1px solid var(--gb-bg3);
+  border-radius: 0;
+}
+
+[data-design="terminal"] .tasks-page .dataTables_filter input:focus,
+[data-design="terminal"] .workers-page .dataTables_filter input:focus {
+  border-color: var(--gb-yellow);
+  box-shadow: none;
+}
+
+[data-design="terminal"] .tasks-page .dataTables_length select,
+[data-design="terminal"] .workers-page .dataTables_length select {
+  color: var(--gb-fg);
+  background-color: var(--gb-bg1);
+  border: 1px solid var(--gb-bg3);
+  border-radius: 0;
+}
+
+[data-design="terminal"] .dataTables_wrapper .dataTables_info {
+  color: var(--gb-gray);
+}
+
+[data-design="terminal"] .dataTables_wrapper .dataTables_paginate .paginate_button,
+[data-design="terminal"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  color: var(--gb-fg) !important;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+[data-design="terminal"] .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+[data-design="terminal"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  color: var(--gb-bg0) !important;
+  background: var(--gb-yellow);
+  border: 0;
+}
+
+/* States as colored glyphs instead of drawn icons */
+[data-design="terminal"] .task-state-icon {
+  display: inline-block;
+  width: 1.5ch;
+  height: auto;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+[data-design="terminal"] .task-state-icon svg {
+  display: none;
+}
+
+[data-design="terminal"] .task-state-icon::before {
+  color: var(--task-state-color);
+  content: "\25CF";
+}
+
+[data-design="terminal"] .task-state-icon-success::before { content: "\2714"; }
+[data-design="terminal"] .task-state-icon-failure::before { content: "\2718"; }
+[data-design="terminal"] .task-state-icon-retry::before { content: "\21BB"; }
+[data-design="terminal"] .task-state-icon-waiting::before { content: "\25F7"; }
+[data-design="terminal"] .task-state-icon-revoked::before { content: "\2298"; }
+[data-design="terminal"] .task-state-icon-waiting { --task-state-color: var(--gb-fg-dim); }
+[data-design="terminal"] .task-state-icon-revoked { --task-state-color: var(--gb-gray); }
+
+/* A braille spinner for running tasks */
+[data-design="terminal"] .task-state-icon-started::before {
+  content: "\280B";
+  animation: terminal-spinner 0.8s steps(1) infinite;
+}
+
+@keyframes terminal-spinner {
+  0% { content: "\280B"; }
+  10% { content: "\2819"; }
+  20% { content: "\2839"; }
+  30% { content: "\2838"; }
+  40% { content: "\283C"; }
+  50% { content: "\2834"; }
+  60% { content: "\2826"; }
+  70% { content: "\2827"; }
+  80% { content: "\2807"; }
+  90% { content: "\280F"; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-design="terminal"] .task-state-icon-started::before {
+    content: "\25CF";
+    animation: none;
+  }
+}
+
+/* Tree guides drawn with box drawing characters */
+[data-design="terminal"] .task-tree-guide,
+[data-design="terminal"] .task-tree-branch {
+  color: var(--gb-bg3);
+  line-height: 1;
+}
+
+[data-design="terminal"] .task-tree-guide-line::before,
+[data-design="terminal"] .task-tree-branch::before,
+[data-design="terminal"] .task-tree-branch::after {
+  position: static;
+  border: 0;
+}
+
+[data-design="terminal"] .task-tree-guide-line::before {
+  content: "\2502";
+}
+
+[data-design="terminal"] .task-tree-branch::before {
+  content: "\251C\2500";
+}
+
+[data-design="terminal"] .task-tree-branch-last::before {
+  content: "\2514\2500";
+}
+
+[data-design="terminal"] .task-tree-branch::after {
+  content: none;
+}
+
+[data-design="terminal"] .task-tree-guide,
+[data-design="terminal"] .task-tree-branch {
+  display: inline-flex;
+  align-items: center;
+  color: var(--gb-gray);
+}
+
+[data-design="terminal"] .task-tree-toggle,
+[data-design="terminal"] .task-tree-expand-all {
+  color: var(--gb-yellow);
+  border-radius: 0;
+}
+
+[data-design="terminal"] .task-tree-summary-failed {
+  color: var(--gb-red);
+}
+
+[data-design="terminal"] .task-tree-summary-active {
+  color: var(--gb-blue);
+}

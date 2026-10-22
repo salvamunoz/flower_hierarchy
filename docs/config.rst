@@ -243,6 +243,29 @@ Enables debug mode.
 
 .. Note:: When debug mode is enabled, Flower may print sensitive information.
 
+.. _design:
+
+design
+~~~~~~
+
+Default: classic
+
+Sets the look of the web interface, for everyone who opens it:
+
+- ``classic``: Flower's own look
+- ``glass``: translucent bars and controls over soft color fields, light or dark
+  like the other designs
+- ``terminal``: a terminal user interface with monospaced text and the Gruvbox
+  palette, always dark
+
+Example::
+
+    $ celery flower --design=glass
+
+Or with an environment variable, for instance in a container::
+
+    $ FLOWER_DESIGN=terminal celery flower
+
 .. _enable_events:
 
 enable_events

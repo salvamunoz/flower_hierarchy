@@ -5,6 +5,8 @@ from prometheus_client import Histogram
 from tornado.options import define, options
 
 DEFAULT_CONFIG_FILE = 'flowerconfig.py'
+# Designs of the web interface; each but classic has a design-<name>.css
+DESIGNS = ('classic', 'glass', 'terminal')
 
 
 define("port", default=5555,
@@ -69,5 +71,7 @@ define("task_runtime_metric_buckets", type=float, default=list(Histogram.DEFAULT
        multiple=True, help="histogram latency bucket value")
 define("read_only", type=bool, default=False,
        help="enable read only mode, disabling all operations")
+define("design", type=str, default="classic",
+       help=f"look of the web interface: {', '.join(DESIGNS)}")
 
 default_options = options

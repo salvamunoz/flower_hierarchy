@@ -12,7 +12,7 @@ from tornado.log import enable_pretty_logging
 from tornado.options import options, parse_command_line, parse_config_file
 
 from .app import Flower
-from .options import DEFAULT_CONFIG_FILE, default_options
+from .options import DEFAULT_CONFIG_FILE, DESIGNS, default_options
 from .urls import settings
 from .utils import abs_path, prepend_url, strtobool
 from .utils.authentication import validate_auth_option
@@ -154,6 +154,11 @@ def extract_settings():
         except ValueError as exc:
             logger.error("Invalid '--broker-api' option: %s", exc)
             sys.exit(1)
+
+    if options.design not in DESIGNS:
+        logger.error("Invalid '--design' option: %s, expected one of %s",
+                     options.design, ', '.join(DESIGNS))
+        sys.exit(1)
 
 
 def is_flower_option(arg):

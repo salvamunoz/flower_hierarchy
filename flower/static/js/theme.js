@@ -35,6 +35,10 @@
     }
 
     function resolvedTheme(theme) {
+        // The terminal design only comes in dark
+        if (root.getAttribute("data-design") === "terminal") {
+            return "dark";
+        }
         return theme === "system" ? preferredTheme() : theme;
     }
 

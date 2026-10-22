@@ -44,7 +44,8 @@ class BaseHandler(tornado.web.RequestHandler):
         functions = inspect.getmembers(template, inspect.isfunction)
         assert not {x[0] for x in functions} & set(kwargs.keys())
         kwargs.update(functions)
-        kwargs.update(url_prefix=app_options.url_prefix)
+        kwargs.update(url_prefix=app_options.url_prefix,
+                      design=getattr(app_options, 'design', 'classic'))
         super().render(*args, **kwargs)
 
     def check_xsrf_cookie(self):

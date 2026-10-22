@@ -571,6 +571,28 @@
         return $('#time').val().startsWith('natural-time');
     }
 
+    // 16px glyphs drawn inside a filled circle, keyed by task state
+    var TASK_STATE_GLYPHS = {
+        SUCCESS: {kind: 'success', path: 'M5 8.2 7.1 10.3 11 6.1'},
+        FAILURE: {kind: 'failure', path: 'M5.6 5.6l4.8 4.8M10.4 5.6l-4.8 4.8'},
+        STARTED: {kind: 'started', path: 'M8 1.75a6.25 6.25 0 0 1 6.25 6.25'},
+        RETRY: {kind: 'retry', path: 'M11.9 9.6A4.2 4.2 0 1 1 11.2 5.2M11.6 2.9v2.6H9'},
+        RECEIVED: {kind: 'waiting', path: 'M8 4.8V8l2.2 1.4'},
+        PENDING: {kind: 'waiting', path: 'M8 4.8V8l2.2 1.4'},
+        REVOKED: {kind: 'revoked', path: 'M4.9 11.1l6.2-6.2'},
+        REJECTED: {kind: 'revoked', path: 'M4.9 11.1l6.2-6.2'}
+    };
+
+    // Celery reports unknown task-* events as custom states, shown as a dot
+    function taskStateIcon(state) {
+        var glyph = TASK_STATE_GLYPHS[state] || {kind: 'other', path: 'M8 8h.01'},
+            label = htmlEscapeEntities(state);
+        return '<span class="task-state-icon task-state-icon-' + glyph.kind + '" role="img" aria-label="' +
+            label + '" title="' + label + '"><svg viewBox="0 0 16 16" aria-hidden="true">' +
+            '<circle class="task-state-disc" cx="8" cy="8" r="7.25"/>' +
+            '<path class="task-state-glyph" d="' + glyph.path + '"/></svg></span>';
+    }
+
     // Column definitions for the tasks table, keyed by column slug
     var taskColumns = {
         name: {
@@ -597,26 +619,10 @@
         state: {
             className: "text-center",
             render: function (data, type, full, meta) {
-                var badge;
-                switch (data) {
-                case 'SUCCESS':
-                    badge = 'text-bg-success';
-                    break;
-                case 'FAILURE':
-                    badge = 'text-bg-danger';
-                    break;
-                case 'STARTED':
-                    badge = 'task-state-started';
-                    break;
-                case 'RETRY':
-                    badge = 'text-bg-warning';
-                    break;
-                default:
-                    badge = 'text-bg-secondary';
+                if (type !== 'display') {
+                    return data;
                 }
-                // celery reports unknown task-* events as custom states
-                return '<span class="badge ' + badge + '">' +
-                    htmlEscapeEntities(data) + '</span>';
+                return taskStateIcon(data);
             }
         },
         args: {
@@ -1095,11 +1101,11 @@
             rowId: 'uuid',
             searching: true,
             searchDelay: 300,
-            scrollX: true,
-            scrollCollapse: true,
             processing: true,
             serverSide: true,
-            dom: "frt<'dt-footer'lip>",
+            // A scrolling wrapper rather than scrollX, which splits off the
+            // header into a table of its own that expanded rows can outgrow
+            dom: "fr<'tasks-table-scroll't><'dt-footer'lip>",
             lengthMenu: [15, 30, 50, 100],
             pageLength: 15,
             stateSave: true,

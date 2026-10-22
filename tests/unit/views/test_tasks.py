@@ -1,11 +1,14 @@
 import json
+import os
 import re
 import time
 from urllib.parse import urlencode
 
 from celery.events import Event
 
+import flower
 from flower.events import EventsState
+from flower.options import DESIGNS
 from flower.views.tasks import visible_task_columns
 from tests.unit import AsyncHTTPTestCase
 from tests.unit.utils import task_failed_events, task_succeeded_events
@@ -516,3 +519,31 @@ class TasksTreeTest(AsyncHTTPTestCase):
         table = self.datatable(expanded={'parent': 'all', 'child2': 0})
         self.assertEqual(['other', 'parent', 'child1', 'child2'],
                          [row['uuid'] for row in table['data']])
+
+
+class DesignTest(AsyncHTTPTestCase):
+    def page(self, design, url='/tasks'):
+        with self.mock_option('design', design):
+            r = self.get(url)
+        self.assertEqual(200, r.code)
+        return r.body.decode('utf-8')
+
+    def test_classic_loads_no_design_stylesheet(self):
+        body = self.page('classic')
+        self.assertIn('<html lang="en">', body)
+        self.assertNotIn('design-', body)
+
+    def test_design_marks_the_page_and_loads_its_stylesheet(self):
+        for design in ('glass', 'terminal'):
+            with self.subTest(design=design):
+                for url in ('/tasks', '/workers'):
+                    body = self.page(design, url)
+                    self.assertIn(f'<html lang="en" data-design="{design}">', body)
+                    self.assertRegex(body, rf'href="/static/css/design-{design}\.css\?v=\w+"')
+                    other = 'terminal' if design == 'glass' else 'glass'
+                    self.assertNotIn(f'design-{other}.css', body)
+
+    def test_every_design_has_a_stylesheet(self):
+        static = os.path.join(os.path.dirname(flower.__file__), 'static', 'css')
+        for design in DESIGNS[1:]:
+            self.assertTrue(os.path.isfile(os.path.join(static, f'design-{design}.css')), design)

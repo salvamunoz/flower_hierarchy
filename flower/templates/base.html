@@ -1,6 +1,6 @@
 {% import pprint %}
 <!doctype html>
-<html lang="en">
+<html lang="en"{% if design != 'classic' %} data-design="{{ design }}"{% end %}>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,6 +10,9 @@
   	<link rel="stylesheet" href="{{ static_url('css/bootstrap.min.css') }}">
 	  <link rel="stylesheet" href="{{ static_url('css/datatables-1.13.4.min.css') }}">
 	  <link href="{{ static_url('css/flower.css') }}" rel="stylesheet">
+    {% if design != 'classic' %}
+    <link href="{{ static_url('css/design-' + design + '.css') }}" rel="stylesheet">
+    {% end %}
   </head>
   <body class="app-body">
     <a class="skip-link" href="#main-content">Skip to main content</a>

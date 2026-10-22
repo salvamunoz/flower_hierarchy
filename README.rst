@@ -47,6 +47,8 @@ What's different from Flower
   top-level task, with the tasks leading to them dimmed.
 - **Live** button that reloads the table every few seconds, and **Tree** /
   **Flat** buttons to switch to Flower's list.
+- **Task states as icons**, and a choice of designs: ``--design=classic``,
+  ``glass`` or ``terminal``.
 - ``GET /api/task/tree/<task-id>``: a task and its descendants as nested JSON.
 - Retries and ``Task.replace`` no longer make a task its own child.
 
@@ -118,6 +120,36 @@ By default, flower runs on port 5555, which can be modified with the `port <http
 The tasks page opens in the tree layout. ``/tasks?view=flat`` opens Flower's
 list, and ``/tasks?autorefresh=5`` turns on Live with a 5 second interval.
 
+Designs
+-------
+
+The ``--design`` option picks the look of the web interface for everyone who
+opens it ::
+
+    $ celery -A tasks.app flower --design=glass
+
+Like Flower's other options, it can also be set with an environment variable,
+``FLOWER_DESIGN=terminal``, or in ``flowerconfig.py``.
+
+``classic`` (the default)
+    Flower's own look, with task states shown as icons. Light or dark.
+
+    .. image:: https://raw.githubusercontent.com/salvamunoz/flower_hierarchy/master/docs/screenshots/design-classic.png
+        :alt: The classic design
+
+``glass``
+    Translucent bars and controls over soft color fields. Light or dark.
+
+    .. image:: https://raw.githubusercontent.com/salvamunoz/flower_hierarchy/master/docs/screenshots/design-glass.png
+        :alt: The glass design
+
+``terminal``
+    A terminal user interface: monospaced text, the Gruvbox palette, the tree
+    drawn with box drawing characters and states as colored glyphs. Always dark.
+
+    .. image:: https://raw.githubusercontent.com/salvamunoz/flower_hierarchy/master/docs/screenshots/design-terminal.png
+        :alt: The terminal design
+
 Docker
 ------
 
@@ -127,6 +159,10 @@ Build the image from this repository ::
     $ docker run -v $(pwd)/examples:/data -p 5555:5555 flower-hierarchy celery --app=tasks.app flower
 
 In this example, Flower is using the `tasks.app` defined in the `examples/tasks.py <https://github.com/salvamunoz/flower_hierarchy/blob/master/examples/tasks.py>`_ file
+
+Options are passed as environment variables too, for instance the design ::
+
+    $ docker run -e FLOWER_DESIGN=terminal -v $(pwd)/examples:/data -p 5555:5555 flower-hierarchy celery --app=tasks.app flower
 
 .. install-end
 
