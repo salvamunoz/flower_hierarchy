@@ -12,6 +12,8 @@ A fork of `Flower <https://github.com/mher/flower>`_, the web application for
 monitoring and managing Celery clusters, that shows each task under the task
 that started it.
 
+flower-hierarchy is not affiliated with or endorsed by the Flower project.
+
 Flower lists tasks one after the other. In flower-hierarchy, the tasks a task
 sends with ``delay``/``apply_async``, the steps of a chain, groups and chords
 appear below it as a tree you can expand and collapse, with a summary of what
@@ -206,6 +208,7 @@ Credits and license
 
 flower-hierarchy is based on `Flower <https://github.com/mher/flower>`_ by
 Mher Movsisyan and its contributors, and keeps its BSD 3-Clause License.
-See the `License`_ file for the full license text.
+It is an independent fork, not affiliated with or endorsed by the Flower
+project or its contributors. See the `License`_ file for the full license text.
 
 .. _`License`: https://github.com/salvamunoz/flower_hierarchy/blob/master/LICENSE
